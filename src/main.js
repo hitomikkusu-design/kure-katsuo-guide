@@ -3,7 +3,7 @@ const routes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower'];
 const routeMeta = {
   home: { label: 'ホーム', icon: '🏠', subtitle: '大正町市場で、待つ時間も旅の思い出に。' },
   wait: { label: '待ち時間', icon: '⏱️', subtitle: '今の待ち時間に合わせて、おすすめを選べます。' },
-  survey: { label: '投稿', icon: '🎮', subtitle: '旅の声を、ゲーム感覚で気軽に残せます。' },
+  survey: { label: 'アンケート', icon: '🎮', subtitle: '旅の声を、ゲーム感覚で気軽に残せます。' },
   katsuo: { label: '豆知識', icon: '🐟', subtitle: '食べる前に読む、久礼のカツオ小話。' },
   market: { label: '市場', icon: '🏮', subtitle: '市場の楽しみ方を短く紹介します。' },
   tower: { label: '防災', icon: '🌊', subtitle: '海のまちで知っておきたい防災の目印。' },
@@ -327,12 +327,13 @@ function infoCard(title, body, tone = 'sea') {
 
 function appQrCard(placement = 'page') {
   return `
-    <section class="app-qr-card app-qr-card--${placement}" aria-labelledby="app-qr-card-title">
+    <section class="app-qr-card app-qr-card--${placement}" aria-labelledby="app-qr-card-title" data-pr3-feature="app-qr">
       <div class="app-qr-card__body">
         <div>
           <p class="app-qr-card__eyebrow">KURE KATSUO GUIDE QR</p>
           <h3 id="app-qr-card-title">このアプリを開くQRコード</h3>
           <p>このQRはアプリの公開URLを開きます。アプリの中身を更新してもURLが同じなら、印刷済みのQRコードはそのまま使えます。</p>
+          <p class="app-qr-card__url">${APP_URL}</p>
         </div>
         <img class="app-qr-card__qr" src="${APP_QR_SRC}" alt="久礼カツオ待ち時間ガイドを開くQRコード" width="148" height="148" loading="lazy" />
       </div>
@@ -340,6 +341,32 @@ function appQrCard(placement = 'page') {
         <a class="button button--app" href="${APP_URL}" target="_blank" rel="noopener noreferrer">アプリを開く</a>
         <a class="button button--substack" href="${SUBSTACK_URL}" target="_blank" rel="noopener noreferrer">Substackを開く</a>
       </div>
+    </section>
+  `;
+}
+
+function surveyPreviewCard() {
+  const previewItems = surveyQuestions.map((question) => `<li><span>${question.icon}</span><strong>${question.label}</strong><small>${question.prompt}</small></li>`).join('');
+
+  return `
+    <section class="survey-preview-card" aria-labelledby="survey-preview-title" data-pr3-feature="survey-preview">
+      <p class="survey-preview-card__eyebrow">VOICE QUEST</p>
+      <h3 id="survey-preview-title">アンケート内容はここに入っています</h3>
+      <p>来訪理由だけでなく、SNS・マーケティング施策に使いやすい認知経路、同行者、満足度、欲しい情報までまとめて集めます。設問一覧はホーム画面でも確認できます。</p>
+      <ol class="survey-preview-card__list">${previewItems}</ol>
+      ${button('アンケートに答える', 'survey', 'primary')}
+    </section>
+  `;
+}
+
+function substackLinkCard(placement = 'page') {
+  return `
+    <section class="substack-link-card substack-link-card--${placement}" aria-labelledby="substack-link-title" data-pr3-feature="substack-link">
+      <p class="substack-link-card__eyebrow">TAISHOMACHI SUBSTACK</p>
+      <h3 id="substack-link-title">大正町市場のSubstackはこちら</h3>
+      <p>大正町市場・久礼の発信は、表示中のURLまたは下のボタンからSubstackで開けます。</p>
+      <p class="substack-link-card__url" aria-label="Substack URL">${SUBSTACK_URL}</p>
+      <a class="button button--substack" href="${SUBSTACK_URL}" target="_blank" rel="noopener noreferrer">Substackを開く</a>
     </section>
   `;
 }
@@ -523,6 +550,7 @@ function surveyPage() {
       </section>
 
       ${appQrCard('survey')}
+      ${substackLinkCard('survey')}
       ${infoCard('マーケティングで見たい追加項目', '認知経路、同行者、満足度、再訪・紹介意向、欲しい情報を入れています。単なる感想だけでなく、次のPR施策や機能改善につながる声を集められます。', 'sun')}
       ${infoCard('保存について', `このMVPでは回答を端末内に保存します。現在この端末に保存されている回答は${savedCount}件です。外部集計を行う場合は、SURVEY_ENDPOINTに送信先URLを設定できます。`)}
     </div>
@@ -627,6 +655,8 @@ function homePage() {
         </div>
       </section>
 
+      ${surveyPreviewCard()}
+
       ${sectionTitle('WAIT TIME', '待ち時間から選ぶ', '今の待ち時間に近いカードを選んでください。')}
       <div class="wait-grid compact">${waitGuides.slice(0, 2).map(waitCard).join('')}</div>
       ${button('すべての待ち時間を見る', 'wait', 'secondary')}
@@ -640,6 +670,7 @@ function homePage() {
 
       ${audioGuideCard('home', 'home')}
       ${appQrCard('home')}
+      ${substackLinkCard('home')}
       ${infoCard('オフラインでも開ける準備', '一度読み込むと、基本情報は通信が不安定な場所でも見返しやすいPWAとして動作します。', 'sun')}
     </div>
   `;

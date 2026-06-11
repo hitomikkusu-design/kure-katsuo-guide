@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kure-katsuo-guide-v6';
+const CACHE_NAME = 'kure-katsuo-guide-v10';
 const APP_SHELL = ['./', 'index.html', 'src/main.js', 'src/styles/global.css', 'manifest.webmanifest', 'icons/icon.svg', 'qr-kure-katsuo-guide.svg'];
 
 self.addEventListener('install', (event) => {

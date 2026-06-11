@@ -6,30 +6,10 @@
 
 - ホーム画面
 - 待ち時間選択
-- ゲーム/SNS感覚で答えられる旅の声アンケート
 - 久礼のカツオ豆知識
 - 大正町市場紹介
 - 防災タワー紹介
 - 将来の音声ガイド枠
-
-
-## アンケート機能
-
-`src/main.js` の `surveyQuestions` でアンケート項目を管理します。現時点ではバックエンドを持たない静的PWAのため、回答は端末内の `localStorage` に保存されます。外部集計を行う場合は `SURVEY_ENDPOINT` に送信先URLを設定すると、回答JSONをPOSTできます。
-
-収集項目は、来訪地、来訪理由、食体験、認知経路、同行者・旅の形、満足度・SNS投稿意向、要望です。感想だけでなく、PR施策や機能改善に使いやすいマーケティング要素も含めています。ホーム画面にもアンケート内容の一覧カードを表示し、下部ナビの「アンケート」から回答画面へ移動できます。
-
-## アプリQRコードとSubstackリンク
-
-アプリ内のホーム画面とアンケート画面に、このアプリを開くQRコードを表示しています。公開URLは `src/main.js` の `APP_URL`、QR画像は `public/qr-kure-katsuo-guide.svg` で管理します。
-
-QRコードはアプリの公開URL（`APP_URL`）を開くためのものです。今後このアプリの内容を更新しても、公開URLが変わらなければ印刷済みのQRコードは変更不要です。公開先のドメイン、GitHubユーザー名、リポジトリ名、パスを変える場合だけQRコードの作り直しが必要です。
-
-大正町市場のSubstackリンク（https://substack.com/@taishomachi）は、アプリQRカード内のボタンに加えて、ホーム画面とアンケート画面の専用Substackリンクカードでも案内します。URLは `src/main.js` の `SUBSTACK_URL` で管理します。
-
-公開後は、ホーム画面でアンケート内容カード、アプリQRカード、Substackリンクカードが表示されることを確認します。これらは `src/main.js` の `surveyPreviewCard`、`appQrCard`、`substackLinkCard` で管理しています。
-
-PR #3 の競合解消時は、main側の既存ガイド構成を残したうえで、`surveyQuestions`、`surveyPage`、`surveyPreviewCard`、`appQrCard`、`substackLinkCard`、`qr-kure-katsuo-guide.svg`、Service WorkerのQRキャッシュ設定を削除しないようにします。
 
 ## 音声ガイドの拡張方針
 
@@ -179,3 +159,13 @@ https://nakatoshi-demo.github.io/kure-katsuo-guide/
 - `npm run dev` - 開発サーバー起動
 - `npm run build` - 静的PWAを `dist/` に出力（PRには含めません）
 - `npm run preview` - ビルド結果のプレビュー
+
+## 追加機能: アンケート・アプリQR・Substackリンク
+
+PR #3 では、既存のガイド構成や音声ガイド方針を残したまま、以下の3つを追加しています。
+
+- **アンケート機能**: `src/main.js` の `surveyQuestions` で設問を管理します。来訪地、来訪理由、食体験、認知経路、同行者・旅の形、満足度・SNS投稿意向、要望を収集します。回答は静的PWAでも動くよう端末内の `localStorage` に保存し、外部集計する場合は `SURVEY_ENDPOINT` に送信先URLを設定します。
+- **アプリQRカード**: `APP_URL` と `APP_QR_SRC` を使い、`public/qr-kure-katsuo-guide.svg` からこのアプリの公開URLを開けるQRコードを表示します。公開URLが変わらなければ、アプリ内容を更新しても印刷済みQRはそのまま使えます。
+- **Substackリンク**: `SUBSTACK_URL`（https://substack.com/@taishomachi）を使い、アプリQRカード内のボタンと専用Substackリンクカードから大正町市場のSubstackを開けます。
+
+公開後は、ホーム画面でアンケート内容カード、アプリQRカード、Substackリンクカードが表示されることを確認してください。競合解消時は、main側の既存ガイド構成を残したうえで、`surveyQuestions`、`surveyPage`、`surveyPreviewCard`、`appQrCard`、`substackLinkCard`、`qr-kure-katsuo-guide.svg`、Service WorkerのQRキャッシュ設定を削除しないようにします。

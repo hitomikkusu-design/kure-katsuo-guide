@@ -333,6 +333,7 @@ function appQrCard(placement = 'page') {
           <p class="app-qr-card__eyebrow">KURE KATSUO GUIDE QR</p>
           <h3 id="app-qr-card-title">このアプリを開くQRコード</h3>
           <p>このQRはアプリの公開URLを開きます。アプリの中身を更新してもURLが同じなら、印刷済みのQRコードはそのまま使えます。</p>
+          <p class="app-qr-card__url">${APP_URL}</p>
         </div>
         <img class="app-qr-card__qr" src="${APP_QR_SRC}" alt="久礼カツオ待ち時間ガイドを開くQRコード" width="148" height="148" loading="lazy" />
       </div>
@@ -364,7 +365,7 @@ function substackLinkCard(placement = 'page') {
       <p class="substack-link-card__eyebrow">TAISHOMACHI SUBSTACK</p>
       <h3 id="substack-link-title">大正町市場のSubstackはこちら</h3>
       <p>大正町市場・久礼の発信は、表示中のURLまたは下のボタンからSubstackで開けます。</p>
-      <p class="substack-link-card__url">${SUBSTACK_URL}</p>
+      <p class="substack-link-card__url" aria-label="Substack URL">${SUBSTACK_URL}</p>
       <a class="button button--substack" href="${SUBSTACK_URL}" target="_blank" rel="noopener noreferrer">Substackを開く</a>
     </section>
   `;

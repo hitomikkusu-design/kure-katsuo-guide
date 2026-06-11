@@ -451,11 +451,16 @@ button {
   color: var(--muted);
 }
 
+.app-qr-card__url,
 .substack-link-card__url {
   overflow-wrap: anywhere;
   color: #b84818 !important;
   font-size: 0.86rem;
   font-weight: 900;
+}
+
+.app-qr-card__url {
+  color: var(--sea-dark) !important;
 }
 
 

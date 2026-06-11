@@ -29,6 +29,8 @@ QRコードはアプリの公開URL（`APP_URL`）を開くためのものです
 
 公開後は、ホーム画面でアンケート内容カード、アプリQRカード、Substackリンクカードが表示されることを確認します。これらは `src/main.js` の `surveyPreviewCard`、`appQrCard`、`substackLinkCard` で管理しています。
 
+PR #3 の競合解消時は、main側の既存ガイド構成を残したうえで、`surveyQuestions`、`surveyPage`、`surveyPreviewCard`、`appQrCard`、`substackLinkCard`、`qr-kure-katsuo-guide.svg`、Service WorkerのQRキャッシュ設定を削除しないようにします。
+
 ## 音声ガイドの拡張方針
 
 `src/main.js` の `audioGuides` で各ページの音声データを管理します。現時点では仮データですが、将来的に以下の形式を差し替えるだけで各ページの再生エリアに反映できます。

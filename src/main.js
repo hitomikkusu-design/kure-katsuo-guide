@@ -327,7 +327,7 @@ function infoCard(title, body, tone = 'sea') {
 
 function appQrCard(placement = 'page') {
   return `
-    <section class="app-qr-card app-qr-card--${placement}" aria-labelledby="app-qr-card-title">
+    <section class="app-qr-card app-qr-card--${placement}" aria-labelledby="app-qr-card-title" data-pr3-feature="app-qr">
       <div class="app-qr-card__body">
         <div>
           <p class="app-qr-card__eyebrow">KURE KATSUO GUIDE QR</p>
@@ -348,7 +348,7 @@ function surveyPreviewCard() {
   const previewItems = surveyQuestions.map((question) => `<li><span>${question.icon}</span><strong>${question.label}</strong><small>${question.prompt}</small></li>`).join('');
 
   return `
-    <section class="survey-preview-card" aria-labelledby="survey-preview-title">
+    <section class="survey-preview-card" aria-labelledby="survey-preview-title" data-pr3-feature="survey-preview">
       <p class="survey-preview-card__eyebrow">VOICE QUEST</p>
       <h3 id="survey-preview-title">アンケート内容はここに入っています</h3>
       <p>来訪理由だけでなく、SNS・マーケティング施策に使いやすい認知経路、同行者、満足度、欲しい情報までまとめて集めます。設問一覧はホーム画面でも確認できます。</p>
@@ -360,7 +360,7 @@ function surveyPreviewCard() {
 
 function substackLinkCard(placement = 'page') {
   return `
-    <section class="substack-link-card substack-link-card--${placement}" aria-labelledby="substack-link-title">
+    <section class="substack-link-card substack-link-card--${placement}" aria-labelledby="substack-link-title" data-pr3-feature="substack-link">
       <p class="substack-link-card__eyebrow">TAISHOMACHI SUBSTACK</p>
       <h3 id="substack-link-title">大正町市場のSubstackはこちら</h3>
       <p>大正町市場・久礼の発信は、表示中のURLまたは下のボタンからSubstackで開けます。</p>

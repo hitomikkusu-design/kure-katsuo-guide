@@ -466,6 +466,12 @@ button {
   justify-self: start;
 }
 
+.survey-preview-card .button:focus-visible,
+.substack-link-card .button:focus-visible {
+  outline: 3px solid rgb(248 195 95 / 80%);
+  outline-offset: 3px;
+}
+
 .survey-preview-card__list {
   display: grid;
   gap: 8px;

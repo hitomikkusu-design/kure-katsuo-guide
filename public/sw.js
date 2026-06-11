@@ -1,5 +1,5 @@
-const CACHE_NAME = 'kure-katsuo-guide-v2';
-const APP_SHELL = ['./', 'index.html', 'src/main.js', 'src/styles/global.css', 'manifest.webmanifest', 'icons/icon.svg'];
+const CACHE_NAME = 'kure-katsuo-guide-v6';
+const APP_SHELL = ['./', 'index.html', 'src/main.js', 'src/styles/global.css', 'manifest.webmanifest', 'icons/icon.svg', 'qr-kure-katsuo-guide.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));

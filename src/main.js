@@ -1,8 +1,9 @@
-const routes = ['home', 'wait', 'katsuo', 'market', 'tower'];
+const routes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower'];
 
 const routeMeta = {
   home: { label: 'ホーム', icon: '🏠', subtitle: '大正町市場で、待つ時間も旅の思い出に。' },
   wait: { label: '待ち時間', icon: '⏱️', subtitle: '今の待ち時間に合わせて、おすすめを選べます。' },
+  survey: { label: '投稿', icon: '🎮', subtitle: '旅の声を、ゲーム感覚で気軽に残せます。' },
   katsuo: { label: '豆知識', icon: '🐟', subtitle: '食べる前に読む、久礼のカツオ小話。' },
   market: { label: '市場', icon: '🏮', subtitle: '市場の楽しみ方を短く紹介します。' },
   tower: { label: '防災', icon: '🌊', subtitle: '海のまちで知っておきたい防災の目印。' },
@@ -71,6 +72,93 @@ const audioGuides = {
     },
   },
 };
+
+
+const APP_URL = 'https://hitomikkusu-design.github.io/kure-katsuo-guide/';
+const APP_QR_SRC = 'qr-kure-katsuo-guide.svg';
+const SUBSTACK_URL = 'https://substack.com/@taishomachi';
+const SURVEY_STORAGE_KEY = 'kure-katsuo-guide-survey-responses';
+const SURVEY_ENDPOINT = '';
+
+const surveyQuestions = [
+  {
+    id: 'origin',
+    label: 'どこから来た？',
+    shortLabel: '出発地',
+    icon: '📍',
+    prompt: '今日はどこから久礼へ来ましたか？',
+    type: 'chips',
+    options: ['高知県内', '四国から', '関西から', '中国地方から', '関東から', '九州から', '海外から'],
+    placeholder: '市町村名や都道府県など',
+    marketing: '来訪者エリアを把握して、PRする地域や交通案内づくりに活用できます。',
+  },
+  {
+    id: 'reason',
+    label: 'なぜ久礼？',
+    shortLabel: '来訪理由',
+    icon: '✨',
+    prompt: '久礼に来ようと思ったきっかけは？',
+    type: 'chips',
+    options: ['カツオを食べたい', '大正町市場に来たい', 'SNSで見た', '家族・友人のおすすめ', 'ドライブ・旅行中', '防災・まち歩きに関心', 'なんとなく気になった'],
+    placeholder: 'きっかけをひとこと',
+    marketing: '来訪動機を知ることで、刺さる発信テーマを見つけやすくなります。',
+  },
+  {
+    id: 'food',
+    label: 'なに待ち・なに食べた？',
+    shortLabel: '食体験',
+    icon: '🐟',
+    prompt: '食べたもの、または待っているお店・メニューは？',
+    type: 'chips',
+    options: ['カツオのたたき', '刺身・丼', '定食', '市場で買い物', 'スイーツ・飲み物', 'これから決める'],
+    placeholder: 'お店名・メニュー名など',
+    marketing: '人気メニューや待ち時間中の関心を把握できます。',
+  },
+  {
+    id: 'discovery',
+    label: '何で知った？',
+    shortLabel: '認知経路',
+    icon: '📣',
+    prompt: '久礼やこのお店・市場を何で知りましたか？',
+    type: 'chips',
+    options: ['Instagram', 'X', 'TikTok', 'YouTube', 'Google検索・マップ', 'テレビ・雑誌', '観光サイト', '口コミ'],
+    placeholder: '見た投稿・番組・サイトなど',
+    marketing: 'マーケティングで重要な認知経路を測れます。',
+  },
+  {
+    id: 'visitStyle',
+    label: 'だれと来た？',
+    shortLabel: '旅の形',
+    icon: '👥',
+    prompt: '今日はどんなスタイルで来ていますか？',
+    type: 'chips',
+    options: ['ひとり旅', '友人と', 'カップル・夫婦', '家族で', '団体・ツアー', '仕事・視察'],
+    placeholder: '人数や旅のスタイルなど',
+    marketing: '客層ごとの体験設計やキャンペーンづくりに役立ちます。',
+  },
+  {
+    id: 'sentiment',
+    label: '今の気分は？',
+    shortLabel: '満足度',
+    icon: '❤️',
+    prompt: '久礼での体験をスタンプで表すなら？',
+    type: 'rating',
+    options: ['😌 のんびり', '😋 おいしい', '😍 最高', '📸 シェアしたい', '🔁 また来たい'],
+    placeholder: '感想をひとこと',
+    marketing: '満足度やSNS投稿意向、再訪意向を軽く測れます。',
+  },
+  {
+    id: 'request',
+    label: 'もっと良くするなら？',
+    shortLabel: '要望',
+    icon: '💡',
+    prompt: 'あったら嬉しい情報・サービスは？',
+    type: 'chips',
+    options: ['待ち時間が知りたい', '混雑予報がほしい', 'おすすめ順路がほしい', '駐車場情報がほしい', '子連れ情報がほしい', '多言語案内がほしい', 'クーポンがほしい'],
+    placeholder: '要望や困ったことなど',
+    marketing: '次に作るべき機能や改善テーマの優先順位を決めやすくなります。',
+  },
+];
 
 const waitGuides = [
   {
@@ -237,6 +325,25 @@ function infoCard(title, body, tone = 'sea') {
   `;
 }
 
+function appQrCard(placement = 'page') {
+  return `
+    <section class="app-qr-card app-qr-card--${placement}" aria-labelledby="app-qr-card-title">
+      <div class="app-qr-card__body">
+        <div>
+          <p class="app-qr-card__eyebrow">KURE KATSUO GUIDE QR</p>
+          <h3 id="app-qr-card-title">このアプリを開くQRコード</h3>
+          <p>このQRはアプリの公開URLを開きます。アプリの中身を更新してもURLが同じなら、印刷済みのQRコードはそのまま使えます。</p>
+        </div>
+        <img class="app-qr-card__qr" src="${APP_QR_SRC}" alt="久礼カツオ待ち時間ガイドを開くQRコード" width="148" height="148" loading="lazy" />
+      </div>
+      <div class="app-qr-card__actions">
+        <a class="button button--app" href="${APP_URL}" target="_blank" rel="noopener noreferrer">アプリを開く</a>
+        <a class="button button--substack" href="${SUBSTACK_URL}" target="_blank" rel="noopener noreferrer">Substackを開く</a>
+      </div>
+    </section>
+  `;
+}
+
 function hasAudioSource(guide) {
   return Boolean(guide.sources.mp3 || guide.sources.spotify || guide.sources.substack);
 }
@@ -311,6 +418,201 @@ function audioGuideCard(route, placement = 'page') {
   `;
 }
 
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function getStoredSurveyResponses() {
+  try {
+    return JSON.parse(window.localStorage.getItem(SURVEY_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveSurveyResponse(response) {
+  const responses = getStoredSurveyResponses();
+  responses.unshift(response);
+  window.localStorage.setItem(SURVEY_STORAGE_KEY, JSON.stringify(responses.slice(0, 20)));
+}
+
+function surveyQuestionCard(question, index) {
+  const optionClass = question.type === 'rating' ? 'survey-options survey-options--emoji' : 'survey-options';
+
+  return `
+    <fieldset class="survey-question" data-survey-question="${question.id}">
+      <legend>
+        <span class="survey-question__number">${index + 1}</span>
+        <span class="survey-question__icon" aria-hidden="true">${question.icon}</span>
+        <span>${question.prompt}</span>
+      </legend>
+      <div class="${optionClass}">
+        ${question.options
+          .map(
+            (option) => `
+              <label class="survey-chip">
+                <input type="checkbox" name="${question.id}" value="${option}" />
+                <span>${option}</span>
+              </label>
+            `,
+          )
+          .join('')}
+      </div>
+      <label class="survey-free-text">
+        <span>${question.label}をひとこと追加</span>
+        <input name="${question.id}Text" type="text" maxlength="80" placeholder="${question.placeholder}" />
+      </label>
+      <p class="survey-marketing-note">${question.marketing}</p>
+    </fieldset>
+  `;
+}
+
+function surveyPage() {
+  const savedCount = getStoredSurveyResponses().length;
+
+  return `
+    <div class="stack">
+      <section class="survey-hero">
+        <p class="hero__eyebrow">KURE VOICE QUEST</p>
+        <h2>旅の声を投稿して、久礼の未来づくりに参加。</h2>
+        <p>タップ中心で約1分。答えるほど「旅メモカード」が育つ、SNS投稿みたいなアンケートです。</p>
+        <div class="survey-stats" aria-label="アンケートの特徴">
+          <span>🎮 7クエスト</span>
+          <span>⭐ 最大700pt</span>
+          <span>📱 端末に保存</span>
+        </div>
+      </section>
+
+      <form class="survey-form" id="survey-form">
+        <div class="survey-progress" aria-live="polite">
+          <div>
+            <span class="survey-progress__label">達成度</span>
+            <strong id="survey-progress-text">0 / ${surveyQuestions.length} クエスト</strong>
+          </div>
+          <div class="survey-progress__track" aria-hidden="true"><span id="survey-progress-bar"></span></div>
+        </div>
+
+        ${surveyQuestions.map(surveyQuestionCard).join('')}
+
+        <label class="survey-free-text survey-free-text--textarea">
+          <span>自由コメント・感想</span>
+          <textarea name="comment" maxlength="240" rows="4" placeholder="久礼で良かったこと、困ったこと、また来たい理由などを自由にどうぞ。"></textarea>
+        </label>
+
+        <label class="survey-consent">
+          <input type="checkbox" name="shareable" />
+          <span>個人が特定されない形で、観光改善やPRのヒントとして活用してOK</span>
+        </label>
+
+        <button class="button button--primary survey-submit" type="submit">旅メモカードを作る</button>
+      </form>
+
+      <section class="survey-share-card" id="survey-share-card" aria-live="polite">
+        <p class="survey-share-card__eyebrow">YOUR KURE CARD</p>
+        <h3>まだ旅メモはありません</h3>
+        <p>アンケートに答えると、ここにSNS投稿風のカードが表示されます。</p>
+        <div class="survey-share-card__tags">
+          <span>#久礼</span><span>#大正町市場</span><span>#カツオ待ち</span>
+        </div>
+      </section>
+
+      ${appQrCard('survey')}
+      ${infoCard('マーケティングで見たい追加項目', '認知経路、同行者、満足度、再訪・紹介意向、欲しい情報を入れています。単なる感想だけでなく、次のPR施策や機能改善につながる声を集められます。', 'sun')}
+      ${infoCard('保存について', `このMVPでは回答を端末内に保存します。現在この端末に保存されている回答は${savedCount}件です。外部集計を行う場合は、SURVEY_ENDPOINTに送信先URLを設定できます。`)}
+    </div>
+  `;
+}
+
+function collectSurveyAnswer(form, question) {
+  const checked = [...form.querySelectorAll(`input[name="${question.id}"]:checked`)].map((input) => input.value);
+  const text = form.elements[`${question.id}Text`]?.value.trim();
+  return {
+    label: question.shortLabel,
+    values: checked,
+    text,
+  };
+}
+
+function getSurveyCompletion(response) {
+  return response.answers.filter((answer) => answer.values.length || answer.text).length;
+}
+
+function renderSurveyProgress() {
+  const form = document.querySelector('#survey-form');
+  const progressText = document.querySelector('#survey-progress-text');
+  const progressBar = document.querySelector('#survey-progress-bar');
+  if (!form || !progressText || !progressBar) return;
+
+  const response = { answers: surveyQuestions.map((question) => collectSurveyAnswer(form, question)) };
+  const completed = getSurveyCompletion(response);
+  const percent = Math.round((completed / surveyQuestions.length) * 100);
+  progressText.textContent = `${completed} / ${surveyQuestions.length} クエスト・${completed * 100}pt`;
+  progressBar.style.width = `${percent}%`;
+}
+
+function renderSurveyShareCard(response) {
+  const card = document.querySelector('#survey-share-card');
+  if (!card) return;
+
+  const completed = getSurveyCompletion(response);
+  const picked = response.answers
+    .filter((answer) => answer.values.length || answer.text)
+    .slice(0, 5)
+    .map((answer) => {
+      const value = [...answer.values, answer.text].filter(Boolean).slice(0, 2).join(' / ');
+      return `<span>${escapeHtml(answer.label)}: ${escapeHtml(value)}</span>`;
+    })
+    .join('');
+  const comment = response.comment ? escapeHtml(response.comment) : '久礼の旅メモを残しました。';
+  const title = completed >= surveyQuestions.length ? '全クエスト達成！久礼マスター' : `${completed}クエスト達成！久礼旅メモ`;
+
+  card.innerHTML = `
+    <p class="survey-share-card__eyebrow">YOUR KURE CARD</p>
+    <h3>${title}</h3>
+    <p>${comment}</p>
+    <div class="survey-share-card__score"><span>⭐ ${completed * 100}pt</span><span>🎁 ${response.shareable ? '改善に活用OK' : '端末内メモ'}</span></div>
+    <div class="survey-share-card__tags">${picked}<span>#久礼</span><span>#大正町市場</span></div>
+  `;
+}
+
+function setupSurveyInteractions() {
+  const form = document.querySelector('#survey-form');
+  if (!form) return;
+
+  form.addEventListener('input', renderSurveyProgress);
+  form.addEventListener('change', renderSurveyProgress);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const response = {
+      id: `survey-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      answers: surveyQuestions.map((question) => collectSurveyAnswer(form, question)),
+      comment: form.elements.comment.value.trim(),
+      shareable: form.elements.shareable.checked,
+    };
+
+    saveSurveyResponse(response);
+    renderSurveyShareCard(response);
+
+    if (SURVEY_ENDPOINT) {
+      await fetch(SURVEY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(response),
+      });
+    }
+
+    window.alert('旅メモカードを作成しました。回答はこの端末に保存されています。');
+  });
+  renderSurveyProgress();
+}
+
 function homePage() {
   return `
     <div class="stack">
@@ -321,6 +623,7 @@ function homePage() {
         <div class="hero__actions">
           ${button('待ち時間を選ぶ', 'wait')}
           ${button('豆知識を読む', 'katsuo', 'ghost')}
+          ${button('旅の声を投稿する', 'survey', 'secondary')}
         </div>
       </section>
 
@@ -329,12 +632,14 @@ function homePage() {
       ${button('すべての待ち時間を見る', 'wait', 'secondary')}
 
       <div class="quick-menu" aria-label="ガイドメニュー">
+        <button data-route="survey" type="button"><span>🎮</span>旅の声アンケート</button>
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
         <button data-route="tower" type="button"><span>🌊</span>防災タワー紹介</button>
       </div>
 
       ${audioGuideCard('home', 'home')}
+      ${appQrCard('home')}
       ${infoCard('オフラインでも開ける準備', '一度読み込むと、基本情報は通信が不安定な場所でも見返しやすいPWAとして動作します。', 'sun')}
     </div>
   `;
@@ -364,6 +669,7 @@ function articlePage(route, eyebrow, title, description, articles, extra) {
 
 function pageFor(route) {
   if (route === 'wait') return waitPage();
+  if (route === 'survey') return surveyPage();
   if (route === 'katsuo') {
     return articlePage(
       'katsuo',
@@ -442,6 +748,8 @@ function render() {
   document.querySelectorAll('[data-route]').forEach((element) => {
     element.addEventListener('click', () => navigate(element.dataset.route));
   });
+
+  setupSurveyInteractions();
 
   document.querySelectorAll('[data-audio-id]').forEach((element) => {
     element.addEventListener('click', () => {

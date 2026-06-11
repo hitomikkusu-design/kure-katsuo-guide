@@ -458,6 +458,14 @@ button {
   font-weight: 900;
 }
 
+
+.survey-preview-card .button,
+.substack-link-card .button {
+  width: auto;
+  min-width: min(100%, 190px);
+  justify-self: start;
+}
+
 .survey-preview-card__list {
   display: grid;
   gap: 8px;

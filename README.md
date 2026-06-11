@@ -27,6 +27,8 @@ QRコードはアプリの公開URL（`APP_URL`）を開くためのものです
 
 大正町市場のSubstackリンク（https://substack.com/@taishomachi）は、アプリQRカード内のボタンに加えて、ホーム画面とアンケート画面の専用Substackリンクカードでも案内します。URLは `src/main.js` の `SUBSTACK_URL` で管理します。
 
+公開後は、ホーム画面でアンケート内容カード、アプリQRカード、Substackリンクカードが表示されることを確認します。これらは `src/main.js` の `surveyPreviewCard`、`appQrCard`、`substackLinkCard` で管理しています。
+
 ## 音声ガイドの拡張方針
 
 `src/main.js` の `audioGuides` で各ページの音声データを管理します。現時点では仮データですが、将来的に以下の形式を差し替えるだけで各ページの再生エリアに反映できます。

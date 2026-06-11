@@ -351,7 +351,7 @@ function surveyPreviewCard() {
     <section class="survey-preview-card" aria-labelledby="survey-preview-title">
       <p class="survey-preview-card__eyebrow">VOICE QUEST</p>
       <h3 id="survey-preview-title">アンケート内容はここに入っています</h3>
-      <p>来訪理由だけでなく、SNS・マーケティング施策に使いやすい認知経路、同行者、満足度、欲しい情報までまとめて集めます。</p>
+      <p>来訪理由だけでなく、SNS・マーケティング施策に使いやすい認知経路、同行者、満足度、欲しい情報までまとめて集めます。設問一覧はホーム画面でも確認できます。</p>
       <ol class="survey-preview-card__list">${previewItems}</ol>
       ${button('アンケートに答える', 'survey', 'primary')}
     </section>
@@ -363,7 +363,7 @@ function substackLinkCard(placement = 'page') {
     <section class="substack-link-card substack-link-card--${placement}" aria-labelledby="substack-link-title">
       <p class="substack-link-card__eyebrow">TAISHOMACHI SUBSTACK</p>
       <h3 id="substack-link-title">大正町市場のSubstackはこちら</h3>
-      <p>大正町市場・久礼の発信は、下のボタンからSubstackで開けます。</p>
+      <p>大正町市場・久礼の発信は、表示中のURLまたは下のボタンからSubstackで開けます。</p>
       <p class="substack-link-card__url">${SUBSTACK_URL}</p>
       <a class="button button--substack" href="${SUBSTACK_URL}" target="_blank" rel="noopener noreferrer">Substackを開く</a>
     </section>

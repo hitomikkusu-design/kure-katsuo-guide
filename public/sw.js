@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kure-katsuo-guide-v10';
+const CACHE_NAME = 'kure-katsuo-guide-v11';
 // Keep v10 so PWA clients replace older v6 caches after the PR #3 conflict resolution.
 const APP_SHELL = ['./', 'index.html', 'src/main.js', 'src/styles/global.css', 'manifest.webmanifest', 'icons/icon.svg', 'qr-kure-katsuo-guide.svg'];
 

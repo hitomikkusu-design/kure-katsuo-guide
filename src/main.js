@@ -690,6 +690,7 @@ function homePage() {
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
         <button data-route="tower" type="button"><span>🌊</span>防災タワー紹介</button>
+        <a class="quick-menu__link" href="tower-warrior.html"><span>🕹️</span>Tower Warrior</a>
       </div>
 
       ${audioGuideCard('home', 'home')}

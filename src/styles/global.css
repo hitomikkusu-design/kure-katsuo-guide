@@ -168,6 +168,7 @@ button {
 .button:active,
 .bottom-nav__item:active,
 .quick-menu button:active,
+.quick-menu__link:active,
 .survey-chip:active {
   transform: translateY(1px) scale(0.99);
 }
@@ -263,7 +264,8 @@ button {
   gap: 10px;
 }
 
-.quick-menu button {
+.quick-menu button,
+.quick-menu__link {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -276,6 +278,7 @@ button {
   cursor: pointer;
   font-weight: 900;
   text-align: left;
+  text-decoration: none;
   box-shadow: 0 10px 24px rgb(15 95 103 / 7%);
 }
 

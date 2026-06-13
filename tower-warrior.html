@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b3d56" />
+  <title>Tower Warrior｜久礼防災サバイバルゲーム</title>
+  <style>
+    :root{--sea:#0b6f92;--deep:#063044;--sun:#ffb703;--fire:#ef4444;--safe:#32d583;--ink:#10202b;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box} body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#8de0ff 0%,#e8f8ff 38%,#ffe7b0 100%);min-height:100vh;overflow-x:hidden}.wrap{max-width:980px;margin:auto;padding:18px 14px 36px}.hero{position:relative;overflow:hidden;border:4px solid #fff;border-radius:28px;padding:22px;background:linear-gradient(135deg,rgba(8,61,86,.94),rgba(11,111,146,.9));color:#fff;box-shadow:0 18px 40px rgba(6,48,68,.25)}.hero h1{font-size:clamp(2rem,8vw,4.6rem);line-height:.92;margin:.1em 0;text-shadow:0 5px 0 rgba(0,0,0,.18)}.hero p{max-width:720px;font-weight:700}.badge{display:inline-flex;gap:.4em;align-items:center;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.14);font-weight:800}.screen{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}@media(max-width:800px){.screen{grid-template-columns:1fr}}.panel{border-radius:24px;padding:18px;background:var(--card);box-shadow:0 16px 35px rgba(6,48,68,.16);border:2px solid #fff}.mode-grid,.answers{display:grid;gap:10px}.mode-grid{grid-template-columns:repeat(3,1fr)}@media(max-width:640px){.mode-grid{grid-template-columns:1fr}}button{font:inherit;cursor:pointer}.mode,.answer,.primary{border:0;border-radius:18px;padding:13px 14px;font-weight:900;transition:.18s transform,.18s filter}.mode{background:#eef8fb;text-align:left;border:2px solid transparent}.mode[aria-pressed="true"]{border-color:var(--sea);background:#d7f5ff;transform:translateY(-2px)}.primary{background:linear-gradient(135deg,var(--sun),#fb7185);color:#231307;box-shadow:0 8px 0 rgba(0,0,0,.18)}.primary:active,.answer:active{transform:translateY(3px)}.stage{position:relative;min-height:360px;border-radius:24px;overflow:hidden;background:linear-gradient(#7dd3fc 0 46%,#3bb273 46% 68%,#8b5a2b 68%);border:4px solid #fff}.tower{position:absolute;right:26px;bottom:92px;width:84px;height:190px;background:repeating-linear-gradient(90deg,#e5e7eb 0 12px,#cbd5e1 12px 24px);clip-path:polygon(28% 0,72% 0,92% 100%,8% 100%)}.tower:before{content:"純平\Aタワー";white-space:pre;position:absolute;top:12px;left:8px;right:8px;text-align:center;background:#0f766e;color:#fff;border-radius:9px;padding:7px 0;font-weight:900}.road{position:absolute;inset:auto 0 0;height:110px;background:linear-gradient(90deg,#6b7280,#374151)}.character{position:absolute;left:calc(16px + var(--progress,0)*1%);bottom:82px;width:78px;height:112px;transition:left .45s ease;z-index:4}.head{width:42px;height:42px;border-radius:50%;background:#ffd7a8;margin:auto;border:3px solid #7c2d12}.body{width:50px;height:54px;border-radius:20px 20px 14px 14px;background:#1d4ed8;margin:-2px auto 0}.fish{position:absolute;left:2px;top:38px;width:70px;height:28px;border-radius:50%;background:linear-gradient(90deg,#2563eb,#93c5fd);transform:rotate(-18deg);border:3px solid #082f49}.fish:after{content:"";position:absolute;right:-16px;top:5px;border:9px solid transparent;border-left-color:#2563eb}.legs{font-size:28px;text-align:center;margin-top:-7px}.name{position:absolute;top:-16px;left:-8px;background:#fff;border-radius:999px;padding:3px 8px;font-weight:900;font-size:12px}.hazard{position:absolute;inset:auto 0 0;height:0;z-index:3;pointer-events:none}.stage.wave .hazard{height:145px;background:linear-gradient(180deg,rgba(56,189,248,.82),#0369a1);animation:surge .9s ease-in-out infinite alternate}.stage.fire .hazard{height:165px;background:radial-gradient(circle at 18% 20%,#fde047 0 7%,transparent 8%),linear-gradient(180deg,#f97316,#991b1b);animation:burn .25s infinite alternate}.stage.rain:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(105deg,rgba(255,255,255,.65) 0 2px,transparent 2px 12px);animation:rain .4s linear infinite}.stage.flood .road{background:#0ea5e9}.stage.success .tower{filter:drop-shadow(0 0 18px #fde047)}@keyframes surge{to{height:220px}}@keyframes burn{to{filter:hue-rotate(20deg) brightness(1.25)}}@keyframes rain{to{transform:translateY(24px)}}.meter{height:16px;background:#dbeafe;border-radius:999px;overflow:hidden}.meter span{display:block;height:100%;width:var(--meter,0%);background:linear-gradient(90deg,var(--safe),var(--sun));transition:.4s}.quiz h2{margin:.2em 0}.answers{margin-top:12px}.answer{text-align:left;background:#fff;border:2px solid #dbeafe}.answer:hover{filter:brightness(.98)}.answer.correct{background:#dcfce7;border-color:#22c55e}.answer.wrong{background:#fee2e2;border-color:#ef4444}.status{min-height:3em;font-weight:900}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#f8fafc;border-radius:16px;padding:10px;text-align:center}.stat b{display:block;font-size:1.4rem}.footer{margin-top:14px;text-align:center;color:#315466;font-weight:700}.shake{animation:shake .35s}@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-5px)}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="badge">🌊 久礼防災サバイバルゲーム</span>
+      <h1>Tower Warrior</h1>
+      <p>カツオを背負った田中社長を、純平タワーまで導け！火災・大雨・洪水・津波の4ステージを、4択の判断クイズで突破しよう。</p>
+      <button class="primary" id="start">警報音を許可してスタート</button>
+    </section>
+
+    <section class="screen">
+      <div class="panel">
+        <div class="stage" id="stageView" aria-label="ゲーム画面">
+          <div class="tower"></div><div class="road"></div><div class="hazard"></div>
+          <div class="character" id="tanaka"><div class="name">田中社長</div><div class="fish"></div><div class="head"></div><div class="body"></div><div class="legs">🏃‍♂️</div></div>
+        </div>
+        <div class="meter" aria-label="純平タワーまでの進捗"><span id="meter"></span></div>
+        <p class="status" id="status">モードを選んで「スタート」を押してください。</p>
+      </div>
+
+      <div class="panel quiz">
+        <h2 id="stageTitle">出動準備</h2>
+        <div class="stats"><div class="stat"><b id="score">0</b>得点</div><div class="stat"><b id="life">3</b>体力</div><div class="stat"><b id="level">通常</b>難易度</div></div>
+        <h3>モード選択</h3>
+        <div class="mode-grid">
+          <button class="mode" data-mode="staff" aria-pressed="true">👷 スタッフ<br><small>誘導・確認重視</small></button>
+          <button class="mode" data-mode="tourist" aria-pressed="false">📷 観光客<br><small>初見でも判断</small></button>
+          <button class="mode" data-mode="festival" aria-pressed="false">🐟 かつお祭り繁忙期<br><small>時間制限＆高難度</small></button>
+        </div>
+        <div class="answers" id="answers"></div>
+      </div>
+    </section>
+    <p class="footer">※これは学習用ゲームです。実際の災害時は自治体・防災無線・現地表示に従ってください。</p>
+  </main>
+<script>
+const stages=[{key:'fire',label:'火災ステージ',effect:'fire',q:'市場の近くで煙と焦げ臭さ。最初の判断は？',a:['動画を撮ってSNSへ投稿','風上へ離れ、周囲に知らせ119番','荷物を取りに店内へ戻る','消火器を探すまで通報しない'],ok:1,why:'火元から離れて通報・周囲への声かけ。煙を吸わない位置取りが大切です。'},{key:'rain',label:'大雨ステージ',effect:'rain',q:'短時間の激しい雨で側溝があふれ始めた。どうする？',a:['川や水路の様子を見に行く','低い道を急いで横切る','最新情報を確認し高い場所へ移動準備','傘を買うまで待つ'],ok:2,why:'水路・川には近づかず、情報確認と早めの高所移動を優先します。'},{key:'flood',label:'洪水ステージ',effect:'flood wave',q:'足元に水が流れ込み、道路の深さが分からない。選ぶ行動は？',a:['靴を脱いで進む','車で一気に突破する','マンホールや側溝を避け高い建物へ','泳いで近道する'],ok:2,why:'冠水路は足元が見えず危険。無理に進まず高い場所へ避難します。'},{key:'tsunami',label:'津波ステージ',effect:'wave',q:'強い揺れのあと海辺にいる。田中社長が目指す場所は？',a:['海を見に行く','純平タワーなど高い避難場所','市場で家族を待つ','車を港へ取りに行く'],ok:1,why:'揺れたら海を見に行かず、すぐ高い場所・避難タワーへ向かいます。'}];
+let mode='staff',idx=0,score=0,life=3,progress=0,locked=false,ctx;
+const $=id=>document.getElementById(id);function beep(type='alarm'){ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();[0,180,360].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type==='bad'?'sawtooth':'square';o.frequency.value=type==='bad'?140:660+i*90;g.gain.setValueAtTime(.0001,ctx.currentTime+t/1000);g.gain.exponentialRampToValueAtTime(.18,ctx.currentTime+t/1000+.03);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+t/1000+.16);o.connect(g).connect(ctx.destination);o.start(ctx.currentTime+t/1000);o.stop(ctx.currentTime+t/1000+.18)})}
+function draw(){const s=stages[idx]||stages[3];$('stageTitle').textContent=s.label;$('stageView').className='stage '+s.effect;$('tanaka').style.setProperty('--progress',progress);$('meter').style.setProperty('--meter',progress+'%');$('score').textContent=score;$('life').textContent=life;$('level').textContent=mode==='festival'?'高':mode==='staff'?'職員':'観光';$('answers').innerHTML=stages[idx]?`<h3>${s.q}</h3>`+s.a.map((x,i)=>`<button class="answer" data-i="${i}">${['A','B','C','D'][i]}. ${x}</button>`).join(''):'<button class="primary" id="again">もう一度挑戦</button>';$('status').textContent=stages[idx]?'正しい判断で純平タワーへ近づこう。':'クリア！田中社長は純平タワーに到着しました。';document.querySelectorAll('.answer').forEach(b=>b.onclick=answer);$('again')&&($('again').onclick=start)}
+function start(){idx=0;score=0;life=mode==='festival'?2:3;progress=0;locked=false;beep();draw()}
+function answer(e){if(locked)return;locked=true;const s=stages[idx],pick=+e.currentTarget.dataset.i,ok=pick===s.ok;e.currentTarget.classList.add(ok?'correct':'wrong');if(ok){score+=mode==='festival'?150:100;progress=Math.min(100,progress+25);$('status').textContent='正解！ '+s.why;beep('ok');idx++;if(idx>=stages.length){progress=100;$('stageView').className='stage success';setTimeout(draw,900);return}}else{life--;score=Math.max(0,score-30);$('status').textContent='危険！ '+(s.key==='fire'?'火に焼かれた！':'津波・水流に飲まれた！')+' '+s.why;$('stageView').classList.add('shake');beep('bad');if(life<=0){idx=stages.length;progress=0;$('status').textContent='ゲームオーバー。防災判断を確認して再挑戦！';setTimeout(draw,1200);return}}setTimeout(()=>{locked=false;draw()},mode==='festival'?900:1400)}
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll('.mode').forEach(x=>x.setAttribute('aria-pressed',x===b));$('level').textContent=mode==='festival'?'高':mode==='staff'?'職員':'観光'});$('start').onclick=start;draw();
+</script>
+</body>
+</html>

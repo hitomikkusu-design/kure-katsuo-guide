@@ -957,7 +957,14 @@ function homePage() {
         </div>
       </section>
 
-      ${surveyPreviewCard()}
+      <button class="survey-game-banner" data-route="survey" type="button">
+        <span class="survey-game-banner__icon">🎮</span>
+        <div class="survey-game-banner__body">
+          <strong>久礼クエスト、挑戦してみる？</strong>
+          <span>タップするだけ・約1分・旅メモカードが完成するき！</span>
+        </div>
+        <span class="survey-game-banner__arrow">›</span>
+      </button>
 
       ${sectionTitle('WAIT TIME', '待ち時間から選ぶ', '今の待ち時間に近いカードを選んでください。')}
       <div class="wait-grid compact">${waitGuides.slice(0, 2).map(waitCard).join('')}</div>

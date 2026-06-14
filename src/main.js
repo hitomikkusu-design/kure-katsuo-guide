@@ -849,17 +849,17 @@ function setupRentalInteractions() {
     startRentalTimer();
   }
 
-  const finishBtn = document.querySelector('#rental-finish');
-  if (finishBtn) {
-    finishBtn.addEventListener('click', () => {
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'rental-finish') {
       saveActiveRental(null);
+      rentalAlarmFired = false;
       if (rentalTimerId) {
         clearInterval(rentalTimerId);
         rentalTimerId = null;
       }
       renderRentalActive();
-    });
-  }
+    }
+  });
 
   if (!form) return;
 

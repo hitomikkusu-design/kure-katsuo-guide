@@ -527,10 +527,10 @@ button {
   left: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   width: min(100%, 430px);
   margin: 0 auto;
-  padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+  padding: 8px 6px max(8px, env(safe-area-inset-bottom));
   border-top: 1px solid rgb(15 95 103 / 10%);
   background: rgb(255 250 241 / 94%);
   backdrop-filter: blur(16px);
@@ -541,22 +541,167 @@ button {
   display: grid;
   gap: 2px;
   justify-items: center;
-  padding: 7px 4px;
+  padding: 7px 2px;
   border: 0;
   border-radius: 16px;
   color: var(--muted);
   background: transparent;
   cursor: pointer;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
 }
 
 .bottom-nav__item span {
-  font-size: 1.12rem;
+  font-size: 1.05rem;
 }
 
 .bottom-nav__item[aria-current='page'] {
   color: var(--sea-dark);
   background: #dcefed;
+}
+
+.rental-form {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgb(15 95 103 / 12%);
+  border-radius: 24px;
+  background: var(--paper);
+  box-shadow: 0 12px 30px rgb(15 95 103 / 8%);
+}
+
+.rental-field {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rental-field > span,
+.rental-field legend {
+  color: var(--sea-dark);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.rental-field em {
+  margin-left: 6px;
+  color: var(--danger);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.rental-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid rgb(15 95 103 / 18%);
+  border-radius: 14px;
+  background: #fff;
+  font: inherit;
+}
+
+.rental-field input:focus-visible {
+  outline: 3px solid rgb(15 95 103 / 35%);
+  outline-offset: 1px;
+}
+
+.rental-duration-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.rental-duration {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border: 2px solid rgb(15 95 103 / 14%);
+  border-radius: 14px;
+  background: #fff;
+  font-weight: 900;
+  color: var(--sea-dark);
+  cursor: pointer;
+}
+
+.rental-duration input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.rental-duration:has(input:checked) {
+  border-color: var(--sea);
+  background: #d7f0ee;
+}
+
+.rental-active__empty {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+}
+
+.rental-card {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  border: 2px solid var(--sea);
+  border-radius: 24px;
+  background: linear-gradient(160deg, #e8f5f3, #fffaf1);
+  box-shadow: 0 14px 32px rgb(15 95 103 / 14%);
+}
+
+.rental-card--overdue {
+  border-color: var(--danger);
+  background: linear-gradient(160deg, #ffe3dc, #fff3ee);
+  animation: rentalPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes rentalPulse {
+  to {
+    box-shadow: 0 14px 40px rgb(191 77 55 / 45%);
+  }
+}
+
+.rental-card__eyebrow {
+  margin: 0;
+  color: var(--sea);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.rental-card--overdue .rental-card__eyebrow {
+  color: var(--danger);
+}
+
+.rental-card h3 {
+  margin: 0;
+  color: var(--sea-dark);
+}
+
+.rental-card__time {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.rental-card__time strong {
+  font-size: 1.3rem;
+}
+
+.rental-card__return {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.rental-card .button {
+  margin-top: 6px;
 }
 
 @media (min-width: 720px) {

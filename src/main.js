@@ -1,4 +1,4 @@
-const routes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower'];
+const routes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower', 'rental'];
 
 const routeMeta = {
   home: { label: 'ホーム', icon: '🏠', subtitle: '大正町市場で、待つ時間も旅の思い出に。' },
@@ -7,6 +7,7 @@ const routeMeta = {
   katsuo: { label: '豆知識', icon: '🐟', subtitle: '食べる前に読む、久礼のカツオ小話。' },
   market: { label: '市場', icon: '🏮', subtitle: '市場の楽しみ方を短く紹介します。' },
   tower: { label: '防災', icon: '🌊', subtitle: '海のまちで知っておきたい防災の目印。' },
+  rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
 };
 
 
@@ -79,6 +80,16 @@ const APP_QR_SRC = 'qr-kure-katsuo-guide.svg';
 const SUBSTACK_URL = 'https://substack.com/@taishomachi';
 const SURVEY_STORAGE_KEY = 'kure-katsuo-guide-survey-responses';
 const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec';
+
+// 車いす予約は同じApps Scriptに送信し、formType で振り分けます。
+const RENTAL_ENDPOINT = SURVEY_ENDPOINT;
+const RENTAL_STORAGE_KEY = 'kure-katsuo-guide-rental-active';
+const rentalDurations = [
+  { label: '30分', minutes: 30 },
+  { label: '1時間', minutes: 60 },
+  { label: '2時間', minutes: 120 },
+  { label: '3時間', minutes: 180 },
+];
 
 const surveyQuestions = [
   {
@@ -665,6 +676,247 @@ function setupSurveyInteractions() {
   renderSurveyProgress();
 }
 
+function getActiveRental() {
+  try {
+    return JSON.parse(window.localStorage.getItem(RENTAL_STORAGE_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function saveActiveRental(rental) {
+  if (rental) {
+    window.localStorage.setItem(RENTAL_STORAGE_KEY, JSON.stringify(rental));
+  } else {
+    window.localStorage.removeItem(RENTAL_STORAGE_KEY);
+  }
+}
+
+function formatClock(date) {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function rentalPage() {
+  const active = getActiveRental();
+
+  const durationButtons = rentalDurations
+    .map(
+      (d, i) => `
+        <label class="rental-duration">
+          <input type="radio" name="duration" value="${d.minutes}" ${i === 1 ? 'checked' : ''} />
+          <span>${d.label}</span>
+        </label>
+      `,
+    )
+    .join('');
+
+  return `
+    <div class="stack">
+      <section class="hero">
+        <p class="hero__eyebrow">WHEELCHAIR RENTAL</p>
+        <h2>車いす貸し出し予約</h2>
+        <p>お名前・電話番号・ご住所と利用時間を入力してください。返却予定の時間になると、このスマホがアラームでお知らせします。</p>
+      </section>
+
+      <section class="rental-active" id="rental-active" aria-live="polite">
+        ${active ? '' : '<p class="rental-active__empty">現在、利用中の予約はありません。</p>'}
+      </section>
+
+      <form class="rental-form" id="rental-form">
+        <label class="rental-field">
+          <span>お名前 <em>必須</em></span>
+          <input name="name" type="text" maxlength="40" required placeholder="例：山田 太郎" />
+        </label>
+        <label class="rental-field">
+          <span>電話番号 <em>必須</em></span>
+          <input name="phone" type="tel" maxlength="20" required placeholder="例：090-1234-5678" inputmode="tel" />
+        </label>
+        <label class="rental-field">
+          <span>ご住所</span>
+          <input name="address" type="text" maxlength="80" placeholder="例：高知県中土佐町久礼…" />
+        </label>
+        <fieldset class="rental-field rental-field--duration">
+          <legend>利用時間</legend>
+          <div class="rental-duration-grid">${durationButtons}</div>
+        </fieldset>
+        <button class="button button--primary" type="submit">予約して返却タイマーを開始</button>
+      </form>
+
+      ${infoCard('返却のお知らせについて', '返却予定時刻になると、このスマホで音とバイブでお知らせします。確実にお知らせするため、画面を開いたままにするか、ホーム画面に追加したアプリでご利用ください。お知らせを許可すると、より気づきやすくなります。', 'sun')}
+      ${infoCard('お店からの呼び出しについて', 'ご予約はお店の名簿にも記録されます。返却時間を過ぎた場合、お店のスタッフからお電話でご連絡することがあります。')}
+    </div>
+  `;
+}
+
+function renderRentalActive() {
+  const box = document.querySelector('#rental-active');
+  if (!box) return;
+  const active = getActiveRental();
+  if (!active) {
+    box.innerHTML = '<p class="rental-active__empty">現在、利用中の予約はありません。</p>';
+    return;
+  }
+
+  const now = Date.now();
+  const remainMs = active.endAt - now;
+  const overdue = remainMs <= 0;
+  const absRemain = Math.abs(remainMs);
+  const h = Math.floor(absRemain / 3600000);
+  const m = Math.floor((absRemain % 3600000) / 60000);
+  const s = Math.floor((absRemain % 60000) / 1000);
+  const timeText = `${h > 0 ? `${h}時間` : ''}${m}分${String(s).padStart(2, '0')}秒`;
+
+  box.innerHTML = `
+    <div class="rental-card ${overdue ? 'rental-card--overdue' : ''}">
+      <p class="rental-card__eyebrow">${overdue ? '⏰ 返却時間です' : '♿ 利用中'}</p>
+      <h3>${escapeHtml(active.name)} さん</h3>
+      <p class="rental-card__time">${overdue ? '返却予定を過ぎています' : '返却まで'} <strong>${timeText}</strong></p>
+      <p class="rental-card__return">返却予定時刻：${active.endClock}</p>
+      <button class="button button--secondary" id="rental-finish" type="button">返却して終了する</button>
+    </div>
+  `;
+}
+
+let rentalTimerId = null;
+let rentalAlarmFired = false;
+
+function fireRentalAlarm(rental) {
+  if (rentalAlarmFired) return;
+  rentalAlarmFired = true;
+
+  if ('vibrate' in navigator) {
+    navigator.vibrate([400, 200, 400, 200, 600]);
+  }
+
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.6, 1.2].forEach((delay) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + delay + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.45);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.5);
+    });
+  } catch {
+    /* 音が出せない環境では無視 */
+  }
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('車いすの返却時間です', {
+      body: `${rental.name} さん、ご利用ありがとうございました。お近くのスタッフまで返却をお願いします。`,
+    });
+  }
+
+  window.alert('車いすの返却時間になりました。お近くのスタッフまで返却をお願いします。');
+}
+
+function startRentalTimer() {
+  if (rentalTimerId) {
+    clearInterval(rentalTimerId);
+    rentalTimerId = null;
+  }
+  const active = getActiveRental();
+  if (!active) return;
+
+  rentalAlarmFired = false;
+  renderRentalActive();
+
+  rentalTimerId = setInterval(() => {
+    const current = getActiveRental();
+    if (!current) {
+      clearInterval(rentalTimerId);
+      rentalTimerId = null;
+      return;
+    }
+    renderRentalActive();
+    if (Date.now() >= current.endAt) {
+      fireRentalAlarm(current);
+    }
+  }, 1000);
+}
+
+function setupRentalInteractions() {
+  const form = document.querySelector('#rental-form');
+
+  // 既存の予約があればタイマーを再開（ページ再表示時も継続）
+  if (getActiveRental()) {
+    startRentalTimer();
+  }
+
+  const finishBtn = document.querySelector('#rental-finish');
+  if (finishBtn) {
+    finishBtn.addEventListener('click', () => {
+      saveActiveRental(null);
+      if (rentalTimerId) {
+        clearInterval(rentalTimerId);
+        rentalTimerId = null;
+      }
+      renderRentalActive();
+    });
+  }
+
+  if (!form) return;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const name = form.elements.name.value.trim();
+    const phone = form.elements.phone.value.trim();
+    const address = form.elements.address.value.trim();
+    const minutes = Number(form.elements.duration.value);
+
+    if (!name || !phone) {
+      window.alert('お名前と電話番号を入力してください。');
+      return;
+    }
+
+    // 通知許可をリクエスト（任意）
+    if ('Notification' in window && Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch {
+        /* 拒否されても続行 */
+      }
+    }
+
+    const startAt = Date.now();
+    const endAt = startAt + minutes * 60000;
+    const endDate = new Date(endAt);
+
+    const rental = {
+      id: `rental-${startAt}`,
+      name,
+      phone,
+      address,
+      minutes,
+      startAt,
+      endAt,
+      endClock: formatClock(endDate),
+      createdAt: new Date(startAt).toISOString(),
+    };
+
+    saveActiveRental(rental);
+    startRentalTimer();
+    form.reset();
+
+    if (RENTAL_ENDPOINT) {
+      fetch(RENTAL_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ formType: 'rental', ...rental }),
+      }).catch(() => {
+        /* 送信失敗してもローカルのタイマーは動く */
+      });
+    }
+
+    window.alert(`予約しました。返却予定は ${rental.endClock} です。時間になるとこのスマホでお知らせします。`);
+  });
+}
+
 function homePage() {
   return `
     <div class="stack">
@@ -690,6 +942,7 @@ function homePage() {
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
         <button data-route="tower" type="button"><span>🌊</span>防災タワー紹介</button>
+        <button data-route="rental" type="button"><span>♿</span>車いす貸し出し予約</button>
         <a class="quick-menu__link" href="tower-warrior.html"><span>🕹️</span>Tower Warrior</a>
       </div>
 
@@ -726,6 +979,7 @@ function articlePage(route, eyebrow, title, description, articles, extra) {
 function pageFor(route) {
   if (route === 'wait') return waitPage();
   if (route === 'survey') return surveyPage();
+  if (route === 'rental') return rentalPage();
   if (route === 'katsuo') {
     return articlePage(
       'katsuo',
@@ -806,6 +1060,7 @@ function render() {
   });
 
   setupSurveyInteractions();
+  setupRentalInteractions();
 
   document.querySelectorAll('[data-audio-id]').forEach((element) => {
     element.addEventListener('click', () => {

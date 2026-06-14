@@ -169,3 +169,7 @@ PR #3 では、既存のガイド構成や音声ガイド方針を残したま�
 - **Substackリンク**: `SUBSTACK_URL`（https://substack.com/@taishomachi）を使い、アプリQRカード内のボタンと専用Substackリンクカードから大正町市場のSubstackを開けます。
 
 公開後は、ホーム画面でアンケート内容カード、アプリQRカード、Substackリンクカードが表示されることを確認してください。競合解消時は、main側の既存ガイド構成を残したうえで、`surveyQuestions`、`surveyPage`、`surveyPreviewCard`、`appQrCard`、`substackLinkCard`、`qr-kure-katsuo-guide.svg`、Service WorkerのQRキャッシュ設定を削除しないようにします。
+
+## Tower Warrior の田中社長デフォルト写真
+
+`tower-warrior.html` の田中社長写真をデフォルト表示にする場合は、写真ファイルを `public/tanaka-president.jpg` として追加してください。`npm run build` で `dist/tanaka-president.jpg` にコピーされ、ゲーム起動時に自動で顔写真として読み込まれます。画面上の「写真を一時差し替え」は端末内プレビュー用で、ファイルは送信されません。

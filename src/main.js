@@ -78,7 +78,7 @@ const APP_URL = 'https://hitomikkusu-design.github.io/kure-katsuo-guide/';
 const APP_QR_SRC = 'qr-kure-katsuo-guide.svg';
 const SUBSTACK_URL = 'https://substack.com/@taishomachi';
 const SURVEY_STORAGE_KEY = 'kure-katsuo-guide-survey-responses';
-const SURVEY_ENDPOINT = '';
+const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec';
 
 const surveyQuestions = [
   {

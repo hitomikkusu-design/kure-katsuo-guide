@@ -780,6 +780,7 @@ function renderRentalActive() {
 
 let rentalTimerId = null;
 let rentalAlarmFired = false;
+let rentalAudioCtx = null;
 
 function fireRentalAlarm(rental) {
   if (rentalAlarmFired) return;
@@ -790,7 +791,8 @@ function fireRentalAlarm(rental) {
   }
 
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = rentalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
     [0, 0.6, 1.2].forEach((delay) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -883,6 +885,14 @@ function setupRentalInteractions() {
         /* 拒否されても続行 */
       }
     }
+
+    // iOSはユーザー操作中にAudioContextを作る必要があるため、ここで初期化
+    try {
+      if (!rentalAudioCtx) {
+        rentalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (rentalAudioCtx.state === 'suspended') rentalAudioCtx.resume();
+    } catch { /* 非対応端末は無視 */ }
 
     const startAt = Date.now();
     const endAt = startAt + minutes * 60000;

@@ -593,8 +593,6 @@ function surveyPage() {
 
       ${appQrCard('survey')}
       ${substackLinkCard('survey')}
-      ${infoCard('マーケティングで見たい追加項目', '認知経路、同行者、満足度、再訪・紹介意向、欲しい情報を入れています。単なる感想だけでなく、次のPR施策や機能改善につながる声を集められます。', 'sun')}
-      ${infoCard('保存について', `このMVPでは回答を端末内に保存します。現在この端末に保存されている回答は${savedCount}件です。外部集計を行う場合は、SURVEY_ENDPOINTに送信先URLを設定できます。`)}
     </div>
   `;
 }

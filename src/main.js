@@ -1027,13 +1027,53 @@ function pageFor(route) {
     );
   }
   if (route === 'tower') {
+    const evacuationCard = `
+      <section class="evacuation-card">
+        <h3>🚨 久礼の避難場所</h3>
+        <p class="evacuation-card__note">地震を感じたらすぐ高台へ。最寄りの避難場所を確認しておきましょう。</p>
+        <ul class="evacuation-list">
+          <li class="evacuation-item">
+            <span class="evacuation-item__icon">🗼</span>
+            <div class="evacuation-item__body">
+              <strong>純平タワー（避難タワー）</strong>
+              <span>市場近くの防災タワー。すぐ登れます。</span>
+            </div>
+            <a class="evacuation-item__map" href="https://maps.app.goo.gl/fu8v87739dH3YpoK9" target="_blank" rel="noopener">地図</a>
+          </li>
+          <li class="evacuation-item">
+            <span class="evacuation-item__icon">🗼</span>
+            <div class="evacuation-item__body">
+              <strong>八千代タワー（避難タワー）</strong>
+              <span>もう一つの防災タワー。</span>
+            </div>
+            <a class="evacuation-item__map" href="https://maps.app.goo.gl/Lrp8y635wbLYcwra9" target="_blank" rel="noopener">地図</a>
+          </li>
+          <li class="evacuation-item">
+            <span class="evacuation-item__icon">🏫</span>
+            <div class="evacuation-item__body">
+              <strong>久礼小学校</strong>
+              <span>高台にある避難場所。</span>
+            </div>
+            <a class="evacuation-item__map" href="https://maps.app.goo.gl/eU6YH7uDq2HuMZ6E6" target="_blank" rel="noopener">地図</a>
+          </li>
+          <li class="evacuation-item">
+            <span class="evacuation-item__icon">🏛️</span>
+            <div class="evacuation-item__body">
+              <strong>町民交流会館</strong>
+              <span>避難場所として指定されています。</span>
+            </div>
+            <a class="evacuation-item__map" href="https://maps.app.goo.gl/EvAHWMeksnKiWUDh8" target="_blank" rel="noopener">地図</a>
+          </li>
+        </ul>
+      </section>
+    `;
     return articlePage(
       'tower',
       'SAFETY',
       '防災タワー紹介',
       '海のまちを楽しむために、観光中にも知っておきたい防災の視点をまとめました。',
       towerGuides,
-      infoCard('災害時のお願い', '地震を感じたら海の様子を見に行かず、現地表示・防災無線・自治体の公式案内に従ってください。', 'safety'),
+      evacuationCard + infoCard('災害時のお願い', '地震を感じたら海の様子を見に行かず、現地表示・防災無線・自治体の公式案内に従ってください。', 'safety'),
     );
   }
   return homePage();

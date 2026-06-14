@@ -559,6 +559,74 @@ button {
   background: #dcefed;
 }
 
+.evacuation-card {
+  background: #fff3f3;
+  border: 2px solid #d12c2c;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.evacuation-card h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #d12c2c;
+}
+
+.evacuation-card__note {
+  font-size: 0.82rem;
+  color: #666;
+  margin: 0 0 14px;
+}
+
+.evacuation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.evacuation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.evacuation-item__icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.evacuation-item__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.evacuation-item__body strong {
+  font-size: 0.9rem;
+}
+
+.evacuation-item__body span {
+  font-size: 0.78rem;
+  color: #666;
+}
+
+.evacuation-item__map {
+  flex-shrink: 0;
+  background: #d12c2c;
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .rental-deadline {
   margin-top: 10px;
   color: #d12c2c;

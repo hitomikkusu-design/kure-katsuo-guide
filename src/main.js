@@ -95,10 +95,10 @@ const rentalDurations = [
 const surveyQuestions = [
   {
     id: 'origin',
-    label: 'どこから来た？',
+    label: 'どっから来たがぜ？',
     shortLabel: '出発地',
     icon: '📍',
-    prompt: '今日はどこから久礼へ来ましたか？',
+    prompt: 'どっから久礼に来たがぜ？',
     type: 'chips',
     options: ['高知県内', '四国から', '関西から', '中国地方から', '関東から', '九州から', '海外から'],
     placeholder: '市町村名や都道府県など',
@@ -106,10 +106,10 @@ const surveyQuestions = [
   },
   {
     id: 'reason',
-    label: 'なぜ久礼？',
+    label: 'なんで久礼に来たがぞ？',
     shortLabel: '来訪理由',
     icon: '✨',
-    prompt: '久礼に来ようと思ったきっかけは？',
+    prompt: '久礼に来ようと思ったきっかけは何がぞ？',
     type: 'chips',
     options: ['カツオを食べたい', '大正町市場に来たい', 'SNSで見た', '家族・友人のおすすめ', 'ドライブ・旅行中', '防災・まち歩きに関心', 'なんとなく気になった'],
     placeholder: 'きっかけをひとこと',
@@ -117,10 +117,10 @@ const surveyQuestions = [
   },
   {
     id: 'food',
-    label: 'なに待ち・なに食べた？',
+    label: 'なにを食べたがえ？まだかえ？',
     shortLabel: '食体験',
     icon: '🐟',
-    prompt: '食べたもの、または待っているお店・メニューは？',
+    prompt: '食べたもの、または今か今かと待ちゆうお店・メニューは？',
     type: 'chips',
     options: ['カツオのたたき', '刺身・丼', '定食', '市場で買い物', 'スイーツ・飲み物', 'これから決める'],
     placeholder: 'お店名・メニュー名など',
@@ -128,10 +128,10 @@ const surveyQuestions = [
   },
   {
     id: 'discovery',
-    label: '何で知った？',
+    label: '久礼を何で知ったがぞ？',
     shortLabel: '認知経路',
     icon: '📣',
-    prompt: '久礼やこのお店・市場を何で知りましたか？',
+    prompt: '久礼やこのお店・市場を何で知ったがぞ？',
     type: 'chips',
     options: ['Instagram', 'X', 'TikTok', 'YouTube', 'Google検索・マップ', 'テレビ・雑誌', '観光サイト', '口コミ'],
     placeholder: '見た投稿・番組・サイトなど',
@@ -139,10 +139,10 @@ const surveyQuestions = [
   },
   {
     id: 'visitStyle',
-    label: 'だれと来た？',
+    label: 'だれと来たがぞね？',
     shortLabel: '旅の形',
     icon: '👥',
-    prompt: '今日はどんなスタイルで来ていますか？',
+    prompt: '今日はだれと来たがぞね？',
     type: 'chips',
     options: ['ひとり旅', '友人と', 'カップル・夫婦', '家族で', '団体・ツアー', '仕事・視察'],
     placeholder: '人数や旅のスタイルなど',
@@ -150,10 +150,10 @@ const surveyQuestions = [
   },
   {
     id: 'sentiment',
-    label: '今の気分は？',
+    label: '今日の久礼、どうやった？',
     shortLabel: '満足度',
     icon: '❤️',
-    prompt: '久礼での体験をスタンプで表すなら？',
+    prompt: '今日の久礼、どうやった？気分を選んでや！',
     type: 'rating',
     options: ['😌 のんびり', '😋 おいしい', '😍 最高', '📸 シェアしたい', '🔁 また来たい'],
     placeholder: '感想をひとこと',
@@ -161,10 +161,10 @@ const surveyQuestions = [
   },
   {
     id: 'request',
-    label: 'もっと良くするなら？',
+    label: 'もっとこんなんあったらえいに！',
     shortLabel: '要望',
     icon: '💡',
-    prompt: 'あったら嬉しい情報・サービスは？',
+    prompt: 'もっとこんなんあったらえいに、ゆうことあるかえ？',
     type: 'chips',
     options: ['待ち時間が知りたい', '混雑予報がほしい', 'おすすめ順路がほしい', '駐車場情報がほしい', '子連れ情報がほしい', '多言語案内がほしい', 'クーポンがほしい'],
     placeholder: '要望や困ったことなど',
@@ -537,8 +537,8 @@ function surveyPage() {
     <div class="stack">
       <section class="survey-hero">
         <p class="hero__eyebrow">KURE VOICE QUEST</p>
-        <h2>旅の声を投稿して、久礼の未来づくりに参加。</h2>
-        <p>タップ中心で約1分。答えるほど「旅メモカード」が育つ、SNS投稿みたいなアンケートです。</p>
+        <h2>久礼のこと、教えてや！</h2>
+        <p>タップするだけで約1分！答えたら「旅メモカード」ができるき、ぜひやってみてや。</p>
         <div class="survey-stats" aria-label="アンケートの特徴">
           <span>🎮 7クエスト</span>
           <span>⭐ 最大700pt</span>
@@ -559,7 +559,7 @@ function surveyPage() {
 
         <label class="survey-free-text survey-free-text--textarea">
           <span>自由コメント・感想</span>
-          <textarea name="comment" maxlength="240" rows="4" placeholder="久礼で良かったこと、困ったこと、また来たい理由などを自由にどうぞ。"></textarea>
+          <textarea name="comment" maxlength="240" rows="4" placeholder="久礼のこと、なんでも書いてや！良かったこと、困ったこと、また来たい理由でも何でも。"></textarea>
         </label>
 
         <label class="survey-consent">
@@ -567,7 +567,7 @@ function surveyPage() {
           <span>個人が特定されない形で、観光改善やPRのヒントとして活用してOK</span>
         </label>
 
-        <button class="button button--primary survey-submit" type="submit">旅メモカードを作る</button>
+        <button class="button button--primary survey-submit" type="submit">旅メモカードを作るぜよ！</button>
       </form>
 
       <section class="survey-share-card" id="survey-share-card" aria-live="polite">

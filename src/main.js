@@ -85,6 +85,7 @@ const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbziyW9dgy3m0-Bs
 const RENTAL_ENDPOINT = SURVEY_ENDPOINT;
 const RENTAL_STORAGE_KEY = 'kure-katsuo-guide-rental-active';
 const rentalDurations = [
+  { label: 'テスト1分', minutes: 1 },
   { label: '30分', minutes: 30 },
   { label: '1時間', minutes: 60 },
   { label: '2時間', minutes: 120 },

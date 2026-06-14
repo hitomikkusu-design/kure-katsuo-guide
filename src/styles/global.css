@@ -559,6 +559,12 @@ button {
   background: #dcefed;
 }
 
+.rental-deadline {
+  margin-top: 10px;
+  color: #d12c2c;
+  font-weight: 700;
+}
+
 .rental-form {
   display: grid;
   gap: 14px;

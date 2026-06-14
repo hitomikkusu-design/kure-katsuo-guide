@@ -717,6 +717,7 @@ function rentalPage() {
         <p class="hero__eyebrow">WHEELCHAIR RENTAL</p>
         <h2>車いす貸し出し予約</h2>
         <p>お名前・電話番号・ご住所と利用時間を入力してください。返却予定の時間になると、このスマホがアラームでお知らせします。</p>
+        <p class="rental-deadline">⚠️ 最終返却時刻は16時半です。ご予約は16時までとなります。</p>
       </section>
 
       <section class="rental-active" id="rental-active" aria-live="polite">
@@ -874,6 +875,14 @@ function setupRentalInteractions() {
 
     if (!name || !phone) {
       window.alert('お名前と電話番号を入力してください。');
+      return;
+    }
+
+    // 受付は16時まで（最終返却時刻16時半）
+    const cutoff = new Date();
+    cutoff.setHours(16, 0, 0, 0);
+    if (Date.now() > cutoff.getTime()) {
+      window.alert('本日のご予約受付は終了しました（最終返却16時半／受付は16時まで）。');
       return;
     }
 

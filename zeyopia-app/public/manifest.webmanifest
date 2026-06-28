@@ -1,0 +1,19 @@
+{
+  "name": "ぜよぴあアプリ",
+  "short_name": "ぜよぴあ",
+  "description": "ぜよぴあの待ち時間と2階会議室予約をスマホから確認できるPWA",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef0f8",
+  "theme_color": "#3a4a8c",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

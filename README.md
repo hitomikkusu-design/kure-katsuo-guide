@@ -173,3 +173,26 @@ PR #3 では、既存のガイド構成や音声ガイド方針を残したま�
 ## Tower Warrior の田中社長デフォルト写真
 
 `tower-warrior.html` の田中社長写真をデフォルト表示にする場合は、写真ファイルを `public/tanaka-president.jpg` として追加してください。`npm run build` で `dist/tanaka-president.jpg` にコピーされ、ゲーム起動時に自動で顔写真として読み込まれます。画面上の「写真を一時差し替え」は端末内プレビュー用で、ファイルは送信されません。
+
+## 追加機能: 2階会議室の予約（Googleカレンダー連携・ダブルブッキング防止）
+
+ホームの「2階会議室、予約できます」バナー、またはメニューの「2階会議室の予約」から開けます。久礼アプリ本体に組み込んでいるため、既存の公開URL・QRコードはそのまま使えます。
+
+- **空き状況表示**: 利用日を選ぶと、その日の予約済み時間帯が時間ごとに表示されます。
+- **予約フォーム**: 日付・開始時間・利用時間（1〜3時間）・お名前・電話番号などを入力して送信します。
+- **ダブルブッキング防止**: 予約確定時にサーバー側（Google Apps Script）でカレンダーを再確認し、`LockService` で同時実行も排他します。同じ時間帯にすでに予約があれば登録せず画面でお知らせします。
+
+### しくみと設定
+
+- フロント側は `src/main.js` の `RESERVE_ENDPOINT`（既定でアンケートと同じ `SURVEY_ENDPOINT`）へ、`?action=reservations&date=...`（GET・空き状況）と `formType:'reservation'` のPOST（予約）を送ります。
+- 受付時間・部屋名は `src/main.js` の `RESERVE_OPEN_HOUR` / `RESERVE_CLOSE_HOUR` / `ROOM_NAME` で変更できます。
+- **カレンダー連携を有効にするには、Apps Script側の対応が必要です。** `apps-script/reservation.gs` の内容を、既存のウェブアプリのスクリプトにマージし、再デプロイ（新しいバージョン）してください。URLは変わらないのでフロント側の変更は不要です。
+- Apps Scriptを更新するまでは、空き状況の取得や予約登録は反映されません（送信は行われますがカレンダーには登録されません）。
+
+| 場所 | 変数 | 用途 |
+| --- | --- | --- |
+| `src/main.js` | `RESERVE_ENDPOINT` | 予約の送信先（既定はアンケートと同じApps Script） |
+| `src/main.js` | `RESERVE_OPEN_HOUR` / `RESERVE_CLOSE_HOUR` | 予約受付時間 |
+| `src/main.js` | `ROOM_NAME` | 予約対象の部屋名 |
+| `apps-script/reservation.gs` | `RESERVE_CALENDAR_ID` | 予約先カレンダー |
+| `apps-script/reservation.gs` | `RESERVE_TITLE_PREFIX` | 会議室予約イベントの判別接頭辞 |

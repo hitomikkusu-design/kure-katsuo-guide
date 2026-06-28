@@ -1,4 +1,5 @@
-const routes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower', 'rental'];
+const navRoutes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower', 'rental'];
+const routes = [...navRoutes, 'reserve'];
 
 const routeMeta = {
   home: { label: 'ホーム', icon: '🏠', subtitle: '大正町市場で、待つ時間も旅の思い出に。' },
@@ -8,6 +9,7 @@ const routeMeta = {
   market: { label: '市場', icon: '🏮', subtitle: '市場の楽しみ方を短く紹介します。' },
   tower: { label: '防災', icon: '🌊', subtitle: '海のまちで知っておきたい防災の目印。' },
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
+  reserve: { label: '会議室', icon: '📅', subtitle: '2階会議室の空きを見て、その場で予約できます。' },
 };
 
 
@@ -90,6 +92,20 @@ const rentalDurations = [
   { label: '1時間', minutes: 60 },
   { label: '2時間', minutes: 120 },
   { label: '3時間', minutes: 180 },
+];
+
+// 2階会議室の予約は同じApps Scriptに formType:'reservation' で送信します。
+// カレンダー連携（ダブルブッキング防止）には、Apps Script側に予約用の処理を追加してください
+// （リポジトリの apps-script/reservation.gs を参照）。
+const RESERVE_ENDPOINT = SURVEY_ENDPOINT;
+const RESERVE_STORAGE_KEY = 'kure-katsuo-guide-reservations';
+const ROOM_NAME = '2階会議室';
+const RESERVE_OPEN_HOUR = 9; // 受付開始（時）
+const RESERVE_CLOSE_HOUR = 21; // 受付終了（時）
+const reserveDurations = [
+  { label: '1時間', hours: 1 },
+  { label: '2時間', hours: 2 },
+  { label: '3時間', hours: 3 },
 ];
 
 const surveyQuestions = [
@@ -941,6 +957,344 @@ function setupRentalInteractions() {
   });
 }
 
+// ===== 2階会議室の予約（Googleカレンダー連携・ダブルブッキング防止） =====
+
+function getStoredReservations() {
+  try {
+    return JSON.parse(window.localStorage.getItem(RESERVE_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveReservation(reservation) {
+  const list = getStoredReservations();
+  list.unshift(reservation);
+  window.localStorage.setItem(RESERVE_STORAGE_KEY, JSON.stringify(list.slice(0, 30)));
+}
+
+function reservePad(n) {
+  return String(n).padStart(2, '0');
+}
+
+function todayISODate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${reservePad(d.getMonth() + 1)}-${reservePad(d.getDate())}`;
+}
+
+function timeToMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function reserveOverlaps(aStart, aEnd, bStart, bEnd) {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+function buildReserveDateTime(dateStr, hhmm) {
+  return new Date(`${dateStr}T${hhmm}:00`);
+}
+
+function reserveStartOptions() {
+  const options = [];
+  for (let h = RESERVE_OPEN_HOUR; h < RESERVE_CLOSE_HOUR; h += 1) {
+    options.push(`<option value="${reservePad(h)}:00">${reservePad(h)}:00</option>`);
+  }
+  return options.join('');
+}
+
+function reservePage() {
+  const durationButtons = reserveDurations
+    .map(
+      (d, i) => `
+        <label class="reserve-duration">
+          <input type="radio" name="duration" value="${d.hours}" ${i === 0 ? 'checked' : ''} />
+          <span>${d.label}</span>
+        </label>
+      `,
+    )
+    .join('');
+
+  return `
+    <div class="stack">
+      <section class="hero">
+        <p class="hero__eyebrow">MEETING ROOM</p>
+        <h2>${ROOM_NAME}の予約</h2>
+        <p>ご希望の日付と時間を選ぶと、空き状況を確認して予約できます。Googleカレンダーと連携し、同じ時間帯の二重予約（ダブルブッキング）を防ぎます。</p>
+        <p class="reserve-deadline">⏰ 受付時間：${RESERVE_OPEN_HOUR}:00〜${RESERVE_CLOSE_HOUR}:00</p>
+      </section>
+
+      <section class="reserve-availability" aria-labelledby="availability-title">
+        <h3 id="availability-title">空き状況</h3>
+        <p class="slot-legend">
+          <span><i class="is-free"></i>空き</span>
+          <span><i class="is-busy"></i>予約済み</span>
+        </p>
+        <div class="slot-grid" id="slot-grid">
+          <p class="reserve-loading">日付を選ぶと空き状況を表示します。</p>
+        </div>
+      </section>
+
+      <form class="reserve-form" id="reserve-form">
+        <label class="reserve-field">
+          <span>利用日 <em>必須</em></span>
+          <input name="date" type="date" required min="${todayISODate()}" value="${todayISODate()}" />
+        </label>
+        <div class="reserve-row">
+          <label class="reserve-field">
+            <span>開始時間 <em>必須</em></span>
+            <select name="startTime" required>${reserveStartOptions()}</select>
+          </label>
+          <fieldset class="reserve-field">
+            <legend>利用時間</legend>
+            <div class="reserve-duration-grid">${durationButtons}</div>
+          </fieldset>
+        </div>
+        <label class="reserve-field">
+          <span>お名前・ご担当者 <em>必須</em></span>
+          <input name="name" type="text" maxlength="40" required placeholder="例：山田 太郎" />
+        </label>
+        <label class="reserve-field">
+          <span>団体・部署名</span>
+          <input name="org" type="text" maxlength="60" placeholder="例：〇〇サークル" />
+        </label>
+        <div class="reserve-row">
+          <label class="reserve-field">
+            <span>電話番号 <em>必須</em></span>
+            <input name="phone" type="tel" maxlength="20" required placeholder="090-1234-5678" inputmode="tel" />
+          </label>
+          <label class="reserve-field">
+            <span>人数</span>
+            <input name="headcount" type="number" min="1" max="100" placeholder="例：6" inputmode="numeric" />
+          </label>
+        </div>
+        <label class="reserve-field">
+          <span>利用目的</span>
+          <textarea name="purpose" maxlength="120" placeholder="例：定例ミーティング"></textarea>
+        </label>
+        <button class="button button--primary" id="reserve-submit" type="submit">空きを確認して予約する</button>
+      </form>
+
+      <section id="reserve-result" aria-live="polite"></section>
+
+      ${infoCard('ダブルブッキングの防止について', '予約時に、サーバー側（Google Apps Script）でもう一度Googleカレンダーの予定を確認します。同じ時間帯にすでに予約がある場合は登録されず、画面でお知らせします。複数の人が同時に予約しても二重予約になりません。')}
+    </div>
+  `;
+}
+
+async function fetchReserveBusy(dateStr) {
+  if (!RESERVE_ENDPOINT) {
+    return getStoredReservations()
+      .filter((r) => r.date === dateStr)
+      .map((r) => ({ start: timeToMinutes(r.startTime), end: timeToMinutes(r.endTime) }));
+  }
+  const res = await fetch(`${RESERVE_ENDPOINT}?action=reservations&date=${encodeURIComponent(dateStr)}`, { method: 'GET' });
+  const data = await res.json();
+  return (data.busy || []).map((ev) => {
+    const start = new Date(ev.start);
+    const end = new Date(ev.end);
+    return { start: start.getHours() * 60 + start.getMinutes(), end: end.getHours() * 60 + end.getMinutes() };
+  });
+}
+
+async function renderReserveAvailability(dateStr) {
+  const grid = document.querySelector('#slot-grid');
+  if (!grid) return;
+  grid.innerHTML = '<p class="reserve-loading">空き状況を確認しています…</p>';
+
+  let busy = [];
+  try {
+    busy = await fetchReserveBusy(dateStr);
+  } catch {
+    grid.innerHTML = '<p class="reserve-loading">空き状況を取得できませんでした。予約時にもう一度確認します。</p>';
+    grid.dataset.busy = '';
+    return;
+  }
+
+  const cells = [];
+  for (let h = RESERVE_OPEN_HOUR; h < RESERVE_CLOSE_HOUR; h += 1) {
+    const slotStart = h * 60;
+    const slotEnd = (h + 1) * 60;
+    const isBusy = busy.some((b) => reserveOverlaps(slotStart, slotEnd, b.start, b.end));
+    cells.push(`
+      <div class="slot slot--${isBusy ? 'busy' : 'free'}">
+        <span>${reservePad(h)}:00–${reservePad(h + 1)}:00</span>
+        <span class="slot__tag">${isBusy ? '予約済' : '空き'}</span>
+      </div>
+    `);
+  }
+  grid.innerHTML = cells.join('');
+  grid.dataset.busy = JSON.stringify(busy);
+}
+
+function reserveResultCard(ok, title, message, detail = '') {
+  return `
+    <div class="reserve-result reserve-result--${ok ? 'ok' : 'ng'}">
+      <p class="reserve-result__eyebrow">${ok ? '✅ 予約を受け付けました' : '⚠️ ご予約できませんでした'}</p>
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(message)}</p>
+      ${detail ? `<p class="reserve-result__detail">${escapeHtml(detail)}</p>` : ''}
+    </div>
+  `;
+}
+
+async function submitReservation(form) {
+  const date = form.elements.date.value;
+  const startTime = form.elements.startTime.value;
+  const hours = Number(form.elements.duration.value);
+  const name = form.elements.name.value.trim();
+  const org = form.elements.org.value.trim();
+  const phone = form.elements.phone.value.trim();
+  const headcount = form.elements.headcount.value.trim();
+  const purpose = form.elements.purpose.value.trim();
+
+  if (!date || !startTime || !name || !phone) {
+    window.alert('利用日・開始時間・お名前・電話番号を入力してください。');
+    return null;
+  }
+
+  const startMin = timeToMinutes(startTime);
+  const endMin = startMin + hours * 60;
+  if (endMin > RESERVE_CLOSE_HOUR * 60) {
+    window.alert(`利用時間が受付終了（${RESERVE_CLOSE_HOUR}:00）を超えています。開始時間か利用時間を調整してください。`);
+    return null;
+  }
+
+  const startDate = buildReserveDateTime(date, startTime);
+  const endTime = `${reservePad(Math.floor(endMin / 60))}:${reservePad(endMin % 60)}`;
+  const endDate = buildReserveDateTime(date, endTime);
+
+  if (startDate.getTime() < Date.now()) {
+    window.alert('過去の時間は予約できません。日付と時間をご確認ください。');
+    return null;
+  }
+
+  // クライアント側の事前チェック（取得済みの空き状況と照合）
+  const grid = document.querySelector('#slot-grid');
+  if (grid && grid.dataset.busy) {
+    try {
+      const busy = JSON.parse(grid.dataset.busy);
+      if (busy.some((b) => reserveOverlaps(startMin, endMin, b.start, b.end))) {
+        return {
+          ok: false,
+          card: reserveResultCard(false, 'この時間はすでに予約があります', '別の時間帯を選んでください。', `${date} ${startTime}〜${endTime}`),
+        };
+      }
+    } catch {
+      /* 無視して送信時チェックに任せる */
+    }
+  }
+
+  const reservation = {
+    id: `reserve-${Date.now()}`,
+    formType: 'reservation',
+    room: ROOM_NAME,
+    date,
+    startTime,
+    endTime,
+    hours,
+    name,
+    org,
+    phone,
+    headcount,
+    purpose,
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
+    createdAt: new Date().toISOString(),
+  };
+
+  // 送信先が未設定の場合は端末内に仮記録（カレンダー連携はApps Script接続後に有効）
+  if (!RESERVE_ENDPOINT) {
+    saveReservation(reservation);
+    return {
+      ok: true,
+      card: reserveResultCard(
+        true,
+        `${date} ${startTime}〜${endTime}`,
+        `${ROOM_NAME}を仮予約として端末に記録しました。`,
+        'Apps Scriptを接続すると、Googleカレンダーへ自動登録され二重予約も防止されます。',
+      ),
+    };
+  }
+
+  // サーバー側でカレンダーを確認し、空いていれば登録（ダブルブッキング防止の本判定）
+  const res = await fetch(RESERVE_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(reservation),
+  });
+  const data = await res.json();
+
+  if (data.ok) {
+    saveReservation({ ...reservation, eventId: data.eventId });
+    return {
+      ok: true,
+      card: reserveResultCard(
+        true,
+        `${date} ${startTime}〜${endTime}`,
+        `${ROOM_NAME}を予約し、Googleカレンダーに登録しました。`,
+        org ? `${name}（${org}）さま` : `${name} さま`,
+      ),
+    };
+  }
+
+  if (data.reason === 'conflict') {
+    return {
+      ok: false,
+      card: reserveResultCard(false, 'この時間はすでに予約があります', '空き状況を更新しました。別の時間帯を選んでください。', `${date} ${startTime}〜${endTime}`),
+    };
+  }
+
+  return {
+    ok: false,
+    card: reserveResultCard(false, '予約処理でエラーが発生しました', 'お手数ですが、時間をおいて再度お試しください。', data.message || ''),
+  };
+}
+
+function setupReserveInteractions() {
+  const form = document.querySelector('#reserve-form');
+  if (!form) return;
+
+  const dateInput = form.elements.date;
+  renderReserveAvailability(dateInput.value);
+  dateInput.addEventListener('change', () => renderReserveAvailability(dateInput.value));
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submit = document.querySelector('#reserve-submit');
+    const resultBox = document.querySelector('#reserve-result');
+    if (submit) {
+      submit.setAttribute('aria-disabled', 'true');
+      submit.textContent = '確認中…';
+    }
+
+    let outcome = null;
+    try {
+      outcome = await submitReservation(form);
+    } catch {
+      outcome = {
+        ok: false,
+        card: reserveResultCard(false, '通信エラー', 'ネットワークの状態をご確認のうえ、再度お試しください。'),
+      };
+    }
+
+    if (submit) {
+      submit.removeAttribute('aria-disabled');
+      submit.textContent = '空きを確認して予約する';
+    }
+
+    if (outcome && resultBox) {
+      resultBox.innerHTML = outcome.card;
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (outcome.ok) {
+        form.reset();
+        if (!dateInput.value) dateInput.value = todayISODate();
+      }
+      renderReserveAvailability(dateInput.value);
+    }
+  });
+}
+
 function homePage() {
   return `
     <div class="stack">
@@ -964,11 +1318,21 @@ function homePage() {
         <span class="survey-game-banner__arrow">›</span>
       </button>
 
+      <button class="survey-game-banner reserve-banner" data-route="reserve" type="button">
+        <span class="survey-game-banner__icon">📅</span>
+        <div class="survey-game-banner__body">
+          <strong>2階会議室、予約できます</strong>
+          <span>空きを見て、その場で予約・Googleカレンダー連携</span>
+        </div>
+        <span class="survey-game-banner__arrow">›</span>
+      </button>
+
       ${sectionTitle('WAIT TIME', '待ち時間から選ぶ', '今の待ち時間に近いカードを選んでください。')}
       <div class="wait-grid compact">${waitGuides.slice(0, 2).map(waitCard).join('')}</div>
       ${button('すべての待ち時間を見る', 'wait', 'secondary')}
 
       <div class="quick-menu" aria-label="ガイドメニュー">
+        <button data-route="reserve" type="button"><span>📅</span>2階会議室の予約</button>
         <button data-route="survey" type="button"><span>🎮</span>旅の声アンケート</button>
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
@@ -1011,6 +1375,7 @@ function pageFor(route) {
   if (route === 'wait') return waitPage();
   if (route === 'survey') return surveyPage();
   if (route === 'rental') return rentalPage();
+  if (route === 'reserve') return reservePage();
   if (route === 'katsuo') {
     return articlePage(
       'katsuo',
@@ -1100,7 +1465,7 @@ function appHeader(route) {
 function bottomNav(currentRoute) {
   return `
     <nav class="bottom-nav" aria-label="主要メニュー">
-      ${routes
+      ${navRoutes
         .map(
           (route) => `
             <button class="bottom-nav__item" data-route="${route}" type="button" ${currentRoute === route ? 'aria-current="page"' : ''}>
@@ -1132,6 +1497,7 @@ function render() {
 
   setupSurveyInteractions();
   setupRentalInteractions();
+  setupReserveInteractions();
 
   document.querySelectorAll('[data-audio-id]').forEach((element) => {
     element.addEventListener('click', () => {

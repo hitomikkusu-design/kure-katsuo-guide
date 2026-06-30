@@ -26,10 +26,12 @@ var CONFIG = {
   // 例: 'kureomiyasan@gmail.com'
   calendarId: 'primary',
 
-  // 予約イベントを見分けるためのタイトル接頭辞。
+  // 2階研修室の予約を見分けるタイトル接頭辞。
   // 既存の予約（くもん教室・硬筆教室など）と同じ「【ぜよぴあ予約】」に合わせること。
-  // これで既存予約との二重予約も防げる。
   roomTitlePrefix: '【ぜよぴあ予約】',
+
+  // 車いすの事前予約を見分けるタイトル接頭辞（研修室と独立して空き判定するため別タグ）。
+  wheelchairTitlePrefix: '【車いす予約】',
 
   // 記録用スプレッドシートID。空欄なら、このスクリプトに紐づくシート（あれば）を使います。
   // 記録だけ不要なら空欄のままで構いません（予約のカレンダー登録には影響しません）。
@@ -39,13 +41,14 @@ var CONFIG = {
   surveySheet: 'アンケート',
   rentalSheet: '車いす予約',
   reservationSheet: '会議室予約',
+  wheelchairSheet: '車いす事前予約',
 };
 
 // ===== エントリーポイント ========================================
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || '';
   if (action === 'reservations') {
-    return jsonOutput(getReservations(e.parameter.date));
+    return jsonOutput(getReservations(e.parameter.date, e.parameter.resource));
   }
   return jsonOutput({ ok: true, service: 'kure-app', time: new Date().toISOString() });
 }
@@ -95,25 +98,33 @@ function createReservation(data) {
     return { ok: false, reason: 'busy', message: 'しばらくしてから再度お試しください。' };
   }
 
+  // 研修室と車いすは別タグで判定（resource で切り替え）。
+  var prefix = data.resource === 'wheelchair' ? CONFIG.wheelchairTitlePrefix : CONFIG.roomTitlePrefix;
+
   try {
     var overlapping = cal.getEvents(start, end).filter(function (ev) {
-      return ev.getTitle().indexOf(CONFIG.roomTitlePrefix) === 0;
+      return ev.getTitle().indexOf(prefix) === 0;
     });
     if (overlapping.length > 0) {
       return { ok: false, reason: 'conflict' };
     }
 
-    var title = CONFIG.roomTitlePrefix + (data.name || '予約');
+    var title = prefix + (data.name || '予約');
     var description = [
       '団体・部署: ' + (data.org || ''),
       '電話: ' + (data.phone || ''),
       '人数: ' + (data.headcount || ''),
       '用途: ' + (data.purpose || ''),
-      '受付: 久礼アプリ（会議室予約）',
+      '金額: ' + (data.amount || ''),
+      '受付: 久礼アプリ（' + (data.resource === 'wheelchair' ? '車いす事前予約' : '会議室予約') + '）',
     ].join('\n');
 
     var event = cal.createEvent(title, start, end, { description: description });
-    logReservationRow(data, event.getId());
+    if (data.resource === 'wheelchair') {
+      logWheelchairRow(data, event.getId());
+    } else {
+      logReservationRow(data, event.getId());
+    }
 
     return { ok: true, eventId: event.getId(), start: data.start, end: data.end };
   } finally {
@@ -122,9 +133,10 @@ function createReservation(data) {
 }
 
 /**
- * 指定日（YYYY-MM-DD）の2階会議室の予約済み区間を返す。
+ * 指定日（YYYY-MM-DD）の予約済み区間を返す。resource で研修室／車いすを切り替え。
  */
-function getReservations(dateStr) {
+function getReservations(dateStr, resource) {
+  var prefix = resource === 'wheelchair' ? CONFIG.wheelchairTitlePrefix : CONFIG.roomTitlePrefix;
   var cal = getCalendar();
   var base = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
   var dayStart = new Date(base);
@@ -133,7 +145,7 @@ function getReservations(dateStr) {
   dayEnd.setHours(23, 59, 59, 999);
 
   var events = cal.getEvents(dayStart, dayEnd).filter(function (ev) {
-    return ev.getTitle().indexOf(CONFIG.roomTitlePrefix) === 0;
+    return ev.getTitle().indexOf(prefix) === 0;
   });
 
   return {
@@ -213,6 +225,32 @@ function logRentalRow(data) {
     ]);
   } catch (e) {
     // 記録失敗は本処理を妨げない。
+  }
+}
+
+// 車いすの事前予約を、列に分けてスプレッドシートへ記録する。
+function logWheelchairRow(data, eventId) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return;
+    var sheet = ss.getSheetByName(CONFIG.wheelchairSheet);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.wheelchairSheet);
+      sheet.appendRow([
+        '受付日時', '利用日', '開始', '終了', 'お名前', '電話番号', 'カレンダーイベントID',
+      ]);
+    }
+    sheet.appendRow([
+      new Date(),
+      data.date || '',
+      data.startTime || '',
+      data.endTime || '',
+      data.name || '',
+      data.phone || '',
+      eventId || '',
+    ]);
+  } catch (e) {
+    // 記録失敗は予約本体（カレンダー登録）を妨げない。
   }
 }
 

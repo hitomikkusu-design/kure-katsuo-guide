@@ -752,6 +752,17 @@ function rentalPage() {
     )
     .join('');
 
+  const wcDurationButtons = reserveDurations
+    .map(
+      (d, i) => `
+        <label class="reserve-duration">
+          <input type="radio" name="duration" value="${d.hours}" ${i === 0 ? 'checked' : ''} />
+          <span>${d.label}</span>
+        </label>
+      `,
+    )
+    .join('');
+
   return `
     <div class="stack">
       <section class="hero">
@@ -784,6 +795,50 @@ function rentalPage() {
         </fieldset>
         <button class="button button--primary" type="submit">予約して返却タイマーを開始</button>
       </form>
+
+      <div class="section-title" style="padding:0 4px">
+        <h2 style="font-size:1.25rem">事前予約（日時指定）</h2>
+        <p>後日の利用を、日時を指定して先に押さえられます。車いすは1台のため、重なる時間帯は予約できません（無料）。</p>
+      </div>
+
+      <section class="reserve-availability" aria-labelledby="wc-availability-title">
+        <h3 id="wc-availability-title">空き状況</h3>
+        <p class="slot-legend">
+          <span><i class="is-free"></i>空き</span>
+          <span><i class="is-busy"></i>予約済み</span>
+        </p>
+        <div class="slot-grid" id="wc-slot-grid">
+          <p class="reserve-loading">日付を選ぶと空き状況を表示します。</p>
+        </div>
+      </section>
+
+      <form class="reserve-form" id="wc-reserve-form">
+        <label class="reserve-field">
+          <span>利用日 <em>必須</em></span>
+          <input name="date" type="date" required min="${tomorrowISODate()}" value="${tomorrowISODate()}" />
+        </label>
+        <div class="reserve-row">
+          <label class="reserve-field">
+            <span>開始時間 <em>必須</em></span>
+            <select name="startTime" required>${reserveStartOptions()}</select>
+          </label>
+          <fieldset class="reserve-field">
+            <legend>利用時間</legend>
+            <div class="reserve-duration-grid">${wcDurationButtons}</div>
+          </fieldset>
+        </div>
+        <label class="reserve-field">
+          <span>お名前 <em>必須</em></span>
+          <input name="name" type="text" maxlength="40" required placeholder="例：山田 太郎" />
+        </label>
+        <label class="reserve-field">
+          <span>電話番号 <em>必須</em></span>
+          <input name="phone" type="tel" maxlength="20" required placeholder="090-1234-5678" inputmode="tel" />
+        </label>
+        <button class="button button--primary" id="wc-reserve-submit" type="submit">空きを確認して事前予約する</button>
+      </form>
+
+      <section id="wc-reserve-result" aria-live="polite"></section>
 
       ${infoCard('返却のお知らせについて', '返却予定時刻になると、このスマホで音とバイブでお知らせします。確実にお知らせするため、画面を開いたままにするか、ホーム画面に追加したアプリでご利用ください。お知らせを許可すると、より気づきやすくなります。', 'sun')}
       ${infoCard('お店からの呼び出しについて', 'ご予約はお店の名簿にも記録されます。返却時間を過ぎた場合、お店のスタッフからお電話でご連絡することがあります。')}
@@ -1131,13 +1186,13 @@ function reservePage() {
   `;
 }
 
-async function fetchReserveBusy(dateStr) {
+async function fetchReserveBusy(dateStr, resource = 'room') {
   if (!RESERVE_ENDPOINT) {
     return getStoredReservations()
-      .filter((r) => r.date === dateStr)
+      .filter((r) => r.date === dateStr && (r.resource || 'room') === resource)
       .map((r) => ({ start: timeToMinutes(r.startTime), end: timeToMinutes(r.endTime) }));
   }
-  const res = await fetch(`${RESERVE_ENDPOINT}?action=reservations&date=${encodeURIComponent(dateStr)}`, { method: 'GET' });
+  const res = await fetch(`${RESERVE_ENDPOINT}?action=reservations&date=${encodeURIComponent(dateStr)}&resource=${encodeURIComponent(resource)}`, { method: 'GET' });
   const data = await res.json();
   return (data.busy || []).map((ev) => {
     const start = new Date(ev.start);
@@ -1146,14 +1201,14 @@ async function fetchReserveBusy(dateStr) {
   });
 }
 
-async function renderReserveAvailability(dateStr) {
-  const grid = document.querySelector('#slot-grid');
+async function renderReserveAvailability(dateStr, resource = 'room', gridSelector = '#slot-grid') {
+  const grid = document.querySelector(gridSelector);
   if (!grid) return;
   grid.innerHTML = '<p class="reserve-loading">空き状況を確認しています…</p>';
 
   let busy = [];
   try {
-    busy = await fetchReserveBusy(dateStr);
+    busy = await fetchReserveBusy(dateStr, resource);
   } catch {
     grid.innerHTML = '<p class="reserve-loading">空き状況を取得できませんでした。予約時にもう一度確認します。</p>';
     grid.dataset.busy = '';
@@ -1309,6 +1364,7 @@ async function submitReservation(form) {
   const reservation = {
     id: `reserve-${Date.now()}`,
     formType: 'reservation',
+    resource: 'room',
     room: ROOM_NAME,
     date,
     startTime,
@@ -1413,6 +1469,146 @@ function setupReserveInteractions() {
         updateReserveFee();
       }
       renderReserveAvailability(dateInput.value);
+    }
+  });
+}
+
+// ===== 車いすの事前予約（1台・日時指定・ダブルブッキング防止） =====
+async function submitWheelchairReserve(form) {
+  const date = form.elements.date.value;
+  const startTime = form.elements.startTime.value;
+  const hours = Number(form.elements.duration.value);
+  const name = form.elements.name.value.trim();
+  const phone = form.elements.phone.value.trim();
+
+  if (!date || !startTime || !name || !phone) {
+    window.alert('利用日・開始時間・お名前・電話番号を入力してください。');
+    return null;
+  }
+
+  const startMin = timeToMinutes(startTime);
+  const endMin = startMin + hours * 60;
+  if (endMin > RESERVE_CLOSE_HOUR * 60) {
+    window.alert(`利用時間が受付終了（${RESERVE_CLOSE_HOUR}:00）を超えています。開始時間か利用時間を調整してください。`);
+    return null;
+  }
+
+  const startDate = buildReserveDateTime(date, startTime);
+  const endTime = `${reservePad(Math.floor(endMin / 60))}:${reservePad(endMin % 60)}`;
+  const endDate = buildReserveDateTime(date, endTime);
+
+  if (startDate.getTime() < Date.now()) {
+    window.alert('過去の時間は予約できません。日付と時間をご確認ください。');
+    return null;
+  }
+
+  const grid = document.querySelector('#wc-slot-grid');
+  if (grid && grid.dataset.busy) {
+    try {
+      const busy = JSON.parse(grid.dataset.busy);
+      if (busy.some((b) => reserveOverlaps(startMin, endMin, b.start, b.end))) {
+        return {
+          ok: false,
+          card: reserveResultCard(false, 'この時間はすでに予約があります', '車いすは1台のため、別の時間帯を選んでください。', `${date} ${startTime}〜${endTime}`),
+        };
+      }
+    } catch {
+      /* 無視して送信時チェックに任せる */
+    }
+  }
+
+  const reservation = {
+    id: `wc-${Date.now()}`,
+    formType: 'reservation',
+    resource: 'wheelchair',
+    room: '車いす',
+    date,
+    startTime,
+    endTime,
+    hours,
+    name,
+    phone,
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!RESERVE_ENDPOINT) {
+    saveReservation(reservation);
+    return {
+      ok: true,
+      card: reserveResultCard(true, `${date} ${startTime}〜${endTime}`, '車いすを仮予約として端末に記録しました。'),
+    };
+  }
+
+  const res = await fetch(RESERVE_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(reservation),
+  });
+  const data = await res.json();
+
+  if (data.ok) {
+    saveReservation({ ...reservation, eventId: data.eventId });
+    return {
+      ok: true,
+      card: reserveResultCard(true, `${date} ${startTime}〜${endTime}`, `車いすを事前予約しました（${name} さま）。当日、お渡しします。`, '無料です。当日、受付までお越しください。'),
+    };
+  }
+
+  if (data.reason === 'conflict') {
+    return {
+      ok: false,
+      card: reserveResultCard(false, 'この時間はすでに予約があります', '空き状況を更新しました。別の時間帯を選んでください。', `${date} ${startTime}〜${endTime}`),
+    };
+  }
+
+  return {
+    ok: false,
+    card: reserveResultCard(false, '予約処理でエラーが発生しました', 'お手数ですが、時間をおいて再度お試しください。', data.message || ''),
+  };
+}
+
+function setupWheelchairReserve() {
+  const form = document.querySelector('#wc-reserve-form');
+  if (!form) return;
+
+  const dateInput = form.elements.date;
+  renderReserveAvailability(dateInput.value, 'wheelchair', '#wc-slot-grid');
+  dateInput.addEventListener('change', () => renderReserveAvailability(dateInput.value, 'wheelchair', '#wc-slot-grid'));
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submit = document.querySelector('#wc-reserve-submit');
+    const resultBox = document.querySelector('#wc-reserve-result');
+    if (submit) {
+      submit.setAttribute('aria-disabled', 'true');
+      submit.textContent = '確認中…';
+    }
+
+    let outcome = null;
+    try {
+      outcome = await submitWheelchairReserve(form);
+    } catch {
+      outcome = {
+        ok: false,
+        card: reserveResultCard(false, '通信エラー', 'ネットワークの状態をご確認のうえ、再度お試しください。'),
+      };
+    }
+
+    if (submit) {
+      submit.removeAttribute('aria-disabled');
+      submit.textContent = '空きを確認して事前予約する';
+    }
+
+    if (outcome && resultBox) {
+      resultBox.innerHTML = outcome.card;
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (outcome.ok) {
+        form.reset();
+        if (!dateInput.value) dateInput.value = tomorrowISODate();
+      }
+      renderReserveAvailability(dateInput.value, 'wheelchair', '#wc-slot-grid');
     }
   });
 }
@@ -1620,6 +1816,7 @@ function render() {
   setupSurveyInteractions();
   setupRentalInteractions();
   setupReserveInteractions();
+  setupWheelchairReserve();
 
   document.querySelectorAll('[data-audio-id]').forEach((element) => {
     element.addEventListener('click', () => {

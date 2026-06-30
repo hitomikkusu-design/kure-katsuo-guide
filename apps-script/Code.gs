@@ -237,7 +237,7 @@ function logWheelchairRow(data, eventId) {
     if (!sheet) {
       sheet = ss.insertSheet(CONFIG.wheelchairSheet);
       sheet.appendRow([
-        '受付日時', '利用日', '開始', '終了', 'お名前', '電話番号', 'カレンダーイベントID',
+        '受付日時', '利用日', '開始', '終了', 'お名前', '電話番号', 'ご住所', 'カレンダーイベントID',
       ]);
     }
     sheet.appendRow([
@@ -247,6 +247,7 @@ function logWheelchairRow(data, eventId) {
       data.endTime || '',
       data.name || '',
       data.phone || '',
+      data.address || '',
       eventId || '',
     ]);
   } catch (e) {

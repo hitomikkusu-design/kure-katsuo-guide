@@ -835,6 +835,10 @@ function rentalPage() {
           <span>電話番号 <em>必須</em></span>
           <input name="phone" type="tel" maxlength="20" required placeholder="090-1234-5678" inputmode="tel" />
         </label>
+        <label class="reserve-field">
+          <span>ご住所 <em>必須</em></span>
+          <input name="address" type="text" maxlength="80" required placeholder="例：高知県中土佐町久礼…" />
+        </label>
         <button class="button button--primary" id="wc-reserve-submit" type="submit">空きを確認して事前予約する</button>
       </form>
 
@@ -1480,9 +1484,10 @@ async function submitWheelchairReserve(form) {
   const hours = Number(form.elements.duration.value);
   const name = form.elements.name.value.trim();
   const phone = form.elements.phone.value.trim();
+  const address = form.elements.address.value.trim();
 
-  if (!date || !startTime || !name || !phone) {
-    window.alert('利用日・開始時間・お名前・電話番号を入力してください。');
+  if (!date || !startTime || !name || !phone || !address) {
+    window.alert('利用日・開始時間・お名前・電話番号・ご住所を入力してください。');
     return null;
   }
 
@@ -1528,6 +1533,7 @@ async function submitWheelchairReserve(form) {
     hours,
     name,
     phone,
+    address,
     start: startDate.toISOString(),
     end: endDate.toISOString(),
     createdAt: new Date().toISOString(),
@@ -1552,7 +1558,7 @@ async function submitWheelchairReserve(form) {
     saveReservation({ ...reservation, eventId: data.eventId });
     return {
       ok: true,
-      card: reserveResultCard(true, `${date} ${startTime}〜${endTime}`, `車いすを事前予約しました（${name} さま）。当日、お渡しします。`, '無料です。当日、受付までお越しください。'),
+      card: reserveResultCard(true, `${date} ${startTime}〜${endTime}`, `車いすを事前予約しました（${name} さま）。`, '当日はぜよぴあ1階・TVの下からご使用いただき、お時間までにぜよぴあTV下までお戻しください。（無料）'),
     };
   }
 

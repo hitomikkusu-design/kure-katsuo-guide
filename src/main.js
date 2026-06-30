@@ -94,10 +94,10 @@ const rentalDurations = [
   { label: '3時間', minutes: 180 },
 ];
 
-// 2階会議室の予約は同じApps Scriptに formType:'reservation' で送信します。
-// カレンダー連携（ダブルブッキング防止）には、Apps Script側に予約用の処理を追加してください
-// （リポジトリの apps-script/reservation.gs を参照）。
-const RESERVE_ENDPOINT = SURVEY_ENDPOINT;
+// 2階会議室の予約は、kureomiyasan アカウントの専用Apps Scriptに送信します。
+// （アンケート・車いす予約は SURVEY_ENDPOINT のまま。予約だけ別アカウントで動かし、
+//  kureomiyasan のカレンダーに直接書き込む構成。カレンダー共有が不要になる。）
+const RESERVE_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec';
 const RESERVE_STORAGE_KEY = 'kure-katsuo-guide-reservations';
 const ROOM_NAME = '2階会議室';
 const RESERVE_OPEN_HOUR = 9; // 受付開始（時）

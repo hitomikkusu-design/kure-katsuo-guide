@@ -9,7 +9,7 @@ const routeMeta = {
   market: { label: '市場', icon: '🏮', subtitle: '市場の楽しみ方を短く紹介します。' },
   tower: { label: '防災', icon: '🌊', subtitle: '海のまちで知っておきたい防災の目印。' },
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
-  reserve: { label: '会議室', icon: '📅', subtitle: '2階会議室の空きを見て、その場で予約できます。' },
+  reserve: { label: '研修室', icon: '📅', subtitle: '2階研修室の空きを見て、その場で予約できます。' },
 };
 
 
@@ -98,17 +98,36 @@ const rentalDurations = [
   { label: '3時間', minutes: 180 },
 ];
 
-// 2階会議室の予約も同じ kureomiyasan のApps Scriptへ（formType:'reservation' で振り分け）。
+// 2階研修室の予約も同じ kureomiyasan のApps Scriptへ（formType:'reservation' で振り分け）。
 const RESERVE_ENDPOINT = SURVEY_ENDPOINT;
 const RESERVE_STORAGE_KEY = 'kure-katsuo-guide-reservations';
-const ROOM_NAME = '2階会議室';
+const ROOM_NAME = '2階研修室';
 const RESERVE_OPEN_HOUR = 9; // 受付開始（時）
-const RESERVE_CLOSE_HOUR = 21; // 受付終了（時）
+const RESERVE_CLOSE_HOUR = 20; // 受付終了（時）= 午後8時（ぜよぴあ規約）
 const reserveDurations = [
   { label: '1時間', hours: 1 },
   { label: '2時間', hours: 2 },
   { label: '3時間', hours: 3 },
 ];
+
+// 利用者区分と1時間あたりの料金（ぜよぴあ利用規約 令和8年5月版）。
+const reserveCategories = [
+  { id: 'kyoryokutai', label: '大正町協力隊', rate: 0 },
+  { id: 'taishocho', label: '大正町の方', rate: 500 },
+  { id: 'kyoryoku-other', label: 'その他協力隊・町内の方', rate: 500 },
+  { id: 'gaibu', label: '町外の方', rate: 1000 },
+];
+
+// 振込先（前払い）。利用料が発生する区分では、予約完了画面でこの案内を表示します。
+const BANK_INFO = {
+  bankName: '高知信用金庫',
+  branch: '久礼支店',
+  type: '普通',
+  number: '0191657',
+  holder: '久礼お宮さん通り商店街組合',
+  deadlineText: '利用日の前日まで',
+  note: '振込手数料はご負担ください。入金確認をもって予約確定となります。当日予約は不可（事務局へお電話ください）。',
+};
 
 const surveyQuestions = [
   {
@@ -1005,6 +1024,13 @@ function reserveStartOptions() {
   return options.join('');
 }
 
+// 当日予約は不可のため、最短は翌日。
+function tomorrowISODate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${reservePad(d.getMonth() + 1)}-${reservePad(d.getDate())}`;
+}
+
 function reservePage() {
   const durationButtons = reserveDurations
     .map(
@@ -1017,13 +1043,24 @@ function reservePage() {
     )
     .join('');
 
+  const categoryButtons = reserveCategories
+    .map(
+      (c) => `
+        <label class="reserve-duration reserve-category">
+          <input type="radio" name="category" value="${c.id}" />
+          <span>${c.label}<small>${c.rate === 0 ? '無料' : `${c.rate.toLocaleString()}円/時`}</small></span>
+        </label>
+      `,
+    )
+    .join('');
+
   return `
     <div class="stack">
       <section class="hero">
-        <p class="hero__eyebrow">MEETING ROOM</p>
+        <p class="hero__eyebrow">2階研修室</p>
         <h2>${ROOM_NAME}の予約</h2>
-        <p>ご希望の日付と時間を選ぶと、空き状況を確認して予約できます。Googleカレンダーと連携し、同じ時間帯の二重予約（ダブルブッキング）を防ぎます。</p>
-        <p class="reserve-deadline">⏰ 受付時間：${RESERVE_OPEN_HOUR}:00〜${RESERVE_CLOSE_HOUR}:00</p>
+        <p>日付と時間を選ぶと空き状況を確認して予約できます。料金は利用者区分と時間で自動計算、お支払いは<strong>銀行振込（前払い）</strong>です。</p>
+        <p class="reserve-deadline">⏰ 受付 ${RESERVE_OPEN_HOUR}:00〜${RESERVE_CLOSE_HOUR}:00／当日予約は不可（要連絡）</p>
       </section>
 
       <section class="reserve-availability" aria-labelledby="availability-title">
@@ -1040,7 +1077,7 @@ function reservePage() {
       <form class="reserve-form" id="reserve-form">
         <label class="reserve-field">
           <span>利用日 <em>必須</em></span>
-          <input name="date" type="date" required min="${todayISODate()}" value="${todayISODate()}" />
+          <input name="date" type="date" required min="${tomorrowISODate()}" value="${tomorrowISODate()}" />
         </label>
         <div class="reserve-row">
           <label class="reserve-field">
@@ -1051,6 +1088,15 @@ function reservePage() {
             <legend>利用時間</legend>
             <div class="reserve-duration-grid">${durationButtons}</div>
           </fieldset>
+        </div>
+        <fieldset class="reserve-field">
+          <legend>利用者区分 <em>必須</em></legend>
+          <div class="reserve-category-grid">${categoryButtons}</div>
+        </fieldset>
+        <div class="reserve-fee" id="reserve-fee" aria-live="polite">
+          <span class="reserve-fee__label">利用料（前払い）</span>
+          <strong id="reserve-fee-amount">区分を選択してください</strong>
+          <small id="reserve-fee-detail"></small>
         </div>
         <label class="reserve-field">
           <span>お名前・ご担当者 <em>必須</em></span>
@@ -1079,7 +1125,8 @@ function reservePage() {
 
       <section id="reserve-result" aria-live="polite"></section>
 
-      ${infoCard('ダブルブッキングの防止について', '予約時に、サーバー側（Google Apps Script）でもう一度Googleカレンダーの予定を確認します。同じ時間帯にすでに予約がある場合は登録されず、画面でお知らせします。複数の人が同時に予約しても二重予約になりません。')}
+      ${infoCard('お支払い（銀行振込・前払い）', `ご予約後、画面に表示される金額を${BANK_INFO.deadlineText}にお振込みください。振込手数料はご負担をお願いします。入金確認をもって予約確定となります。`, 'sun')}
+      ${infoCard('ダブルブッキングの防止について', '予約時にサーバー側（Google Apps Script）でカレンダーを再確認し、同じ時間帯にすでに予約があれば登録せずお知らせします。複数の人が同時に予約しても二重予約になりません。')}
     </div>
   `;
 }
@@ -1140,6 +1187,67 @@ function reserveResultCard(ok, title, message, detail = '') {
   `;
 }
 
+// 予約完了カード（無料区分は振込案内なし、有料区分は振込先を表示）。
+function reserveSuccessCard(reservation) {
+  const isFree = reservation.amountValue === 0;
+  const who = reservation.org ? `${reservation.name}（${reservation.org}）さま` : `${reservation.name} さま`;
+
+  let payBlock;
+  if (isFree) {
+    payBlock = `<p class="reserve-result__detail">区分「${escapeHtml(reservation.category)}」は利用無料です。お振込みは不要です。</p>`;
+  } else if (BANK_INFO.bankName) {
+    payBlock = `
+      <div class="reserve-pay">
+        <p class="reserve-pay__amount">お振込金額　<strong>${escapeHtml(reservation.amountValue.toLocaleString())}円</strong></p>
+        <dl class="reserve-pay__bank">
+          <div><dt>振込先</dt><dd>${escapeHtml(BANK_INFO.bankName)} ${escapeHtml(BANK_INFO.branch)}</dd></div>
+          <div><dt>種別・口座</dt><dd>${escapeHtml(BANK_INFO.type)} ${escapeHtml(BANK_INFO.number)}</dd></div>
+          <div><dt>名義</dt><dd>${escapeHtml(BANK_INFO.holder)}</dd></div>
+          <div><dt>振込期限</dt><dd>${escapeHtml(BANK_INFO.deadlineText)}</dd></div>
+        </dl>
+        <p class="reserve-pay__note">${escapeHtml(BANK_INFO.note)}</p>
+      </div>`;
+  } else {
+    payBlock = `<p class="reserve-result__detail">お振込先は事務局よりご案内します。</p>`;
+  }
+
+  return `
+    <div class="reserve-result reserve-result--ok">
+      <p class="reserve-result__eyebrow">✅ ご予約を受け付けました（仮予約）</p>
+      <h3>${escapeHtml(reservation.date)}　${escapeHtml(reservation.startTime)}〜${escapeHtml(reservation.endTime)}</h3>
+      <p>${escapeHtml(ROOM_NAME)}／${escapeHtml(who)}</p>
+      ${payBlock}
+    </div>
+  `;
+}
+
+// 利用者区分・利用時間から利用料を即時計算して表示する。
+function updateReserveFee() {
+  const form = document.querySelector('#reserve-form');
+  const amountEl = document.querySelector('#reserve-fee-amount');
+  const detailEl = document.querySelector('#reserve-fee-detail');
+  if (!form || !amountEl) return;
+
+  const hours = Number(form.elements.duration.value) || 0;
+  const categoryId = form.elements.category ? form.elements.category.value : '';
+  const category = reserveCategories.find((c) => c.id === categoryId);
+
+  if (!category) {
+    amountEl.textContent = '区分を選択してください';
+    if (detailEl) detailEl.textContent = '';
+    return;
+  }
+
+  const amount = category.rate * hours;
+  amountEl.textContent = amount === 0 ? '無料' : `${amount.toLocaleString()} 円`;
+  if (detailEl) {
+    detailEl.textContent =
+      category.rate === 0
+        ? `${category.label}（無料）`
+        : `${category.label}・${category.rate.toLocaleString()}円 × ${hours}時間`;
+  }
+}
+
 async function submitReservation(form) {
   const date = form.elements.date.value;
   const startTime = form.elements.startTime.value;
@@ -1149,9 +1257,16 @@ async function submitReservation(form) {
   const phone = form.elements.phone.value.trim();
   const headcount = form.elements.headcount.value.trim();
   const purpose = form.elements.purpose.value.trim();
+  const categoryId = form.elements.category ? form.elements.category.value : '';
 
   if (!date || !startTime || !name || !phone) {
     window.alert('利用日・開始時間・お名前・電話番号を入力してください。');
+    return null;
+  }
+
+  const category = reserveCategories.find((c) => c.id === categoryId);
+  if (!category) {
+    window.alert('利用者区分を選択してください。');
     return null;
   }
 
@@ -1187,6 +1302,10 @@ async function submitReservation(form) {
     }
   }
 
+  const amountValue = category.rate * hours;
+  const amountText = amountValue === 0 ? `無料（${category.label}）` : `${amountValue.toLocaleString()}円（${category.label}）`;
+  const paymentStatus = amountValue === 0 ? '不要' : '未入金';
+
   const reservation = {
     id: `reserve-${Date.now()}`,
     formType: 'reservation',
@@ -1200,6 +1319,10 @@ async function submitReservation(form) {
     phone,
     headcount,
     purpose,
+    category: category.label,
+    amount: amountText,
+    amountValue,
+    paymentStatus,
     start: startDate.toISOString(),
     end: endDate.toISOString(),
     createdAt: new Date().toISOString(),
@@ -1229,15 +1352,7 @@ async function submitReservation(form) {
 
   if (data.ok) {
     saveReservation({ ...reservation, eventId: data.eventId });
-    return {
-      ok: true,
-      card: reserveResultCard(
-        true,
-        `${date} ${startTime}〜${endTime}`,
-        `${ROOM_NAME}を予約し、Googleカレンダーに登録しました。`,
-        org ? `${name}（${org}）さま` : `${name} さま`,
-      ),
-    };
+    return { ok: true, card: reserveSuccessCard(reservation) };
   }
 
   if (data.reason === 'conflict') {
@@ -1260,6 +1375,10 @@ function setupReserveInteractions() {
   const dateInput = form.elements.date;
   renderReserveAvailability(dateInput.value);
   dateInput.addEventListener('change', () => renderReserveAvailability(dateInput.value));
+
+  form.addEventListener('change', updateReserveFee);
+  form.addEventListener('input', updateReserveFee);
+  updateReserveFee();
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -1290,7 +1409,8 @@ function setupReserveInteractions() {
       resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       if (outcome.ok) {
         form.reset();
-        if (!dateInput.value) dateInput.value = todayISODate();
+        if (!dateInput.value) dateInput.value = tomorrowISODate();
+        updateReserveFee();
       }
       renderReserveAvailability(dateInput.value);
     }
@@ -1323,8 +1443,8 @@ function homePage() {
       <button class="survey-game-banner reserve-banner" data-route="reserve" type="button">
         <span class="survey-game-banner__icon">📅</span>
         <div class="survey-game-banner__body">
-          <strong>2階会議室、予約できます</strong>
-          <span>空きを見て、その場で予約・Googleカレンダー連携</span>
+          <strong>2階研修室、予約できます</strong>
+          <span>空きを見て予約・料金自動計算・振込前払い</span>
         </div>
         <span class="survey-game-banner__arrow">›</span>
       </button>
@@ -1334,7 +1454,7 @@ function homePage() {
       ${button('すべての待ち時間を見る', 'wait', 'secondary')}
 
       <div class="quick-menu" aria-label="ガイドメニュー">
-        <button data-route="reserve" type="button"><span>📅</span>2階会議室の予約</button>
+        <button data-route="reserve" type="button"><span>📅</span>2階研修室の予約</button>
         <button data-route="survey" type="button"><span>🎮</span>旅の声アンケート</button>
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>

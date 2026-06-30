@@ -1512,3 +1512,114 @@ button {
   color: var(--muted) !important;
   font-weight: 700 !important;
 }
+
+/* ===== 利用者区分・料金・振込案内 ===== */
+
+.reserve-category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.reserve-category {
+  min-height: 56px;
+}
+
+.reserve-category span {
+  display: grid;
+  gap: 2px;
+  padding: 6px 4px;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.reserve-category small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.reserve-category:has(input:checked) small {
+  color: var(--sea-dark);
+}
+
+.reserve-fee {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid rgb(248 195 95 / 55%);
+  border-radius: 16px;
+  background: #fff3d6;
+}
+
+.reserve-fee__label {
+  color: var(--danger);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.reserve-fee strong {
+  color: var(--sea-dark);
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.reserve-fee small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.reserve-pay {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 14px;
+  border: 1px solid rgb(15 95 103 / 14%);
+  border-radius: 16px;
+  background: #fffaf1;
+}
+
+.reserve-pay__amount {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.reserve-pay__amount strong {
+  color: var(--danger);
+  font-size: 1.3rem;
+}
+
+.reserve-pay__bank {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.reserve-pay__bank div {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.reserve-pay__bank dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.reserve-pay__bank dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.reserve-pay__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}

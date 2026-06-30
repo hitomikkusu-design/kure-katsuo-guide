@@ -113,7 +113,7 @@ function createReservation(data) {
     ].join('\n');
 
     var event = cal.createEvent(title, start, end, { description: description });
-    logRow(CONFIG.reservationSheet, data, event.getId());
+    logReservationRow(data, event.getId());
 
     return { ok: true, eventId: event.getId(), start: data.start, end: data.end };
   } finally {
@@ -157,6 +157,37 @@ function getSpreadsheet() {
   return SpreadsheetApp.getActiveSpreadsheet(); // 紐づくシートが無ければ null
 }
 
+// 会議室予約を、列に分けて読みやすくスプレッドシートへ記録する。
+// シートが無ければ見出し付きで自動作成する。
+function logReservationRow(data, eventId) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return; // 記録先が無ければスキップ（カレンダー登録は完了している）
+    var sheet = ss.getSheetByName(CONFIG.reservationSheet);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.reservationSheet);
+      sheet.appendRow([
+        '受付日時', '利用日', '開始', '終了', 'お名前', '団体・部署', '電話番号', '人数', '利用目的', 'カレンダーイベントID',
+      ]);
+    }
+    sheet.appendRow([
+      new Date(),
+      data.date || '',
+      data.startTime || '',
+      data.endTime || '',
+      data.name || '',
+      data.org || '',
+      data.phone || '',
+      data.headcount || '',
+      data.purpose || '',
+      eventId || '',
+    ]);
+  } catch (e) {
+    // 記録失敗は予約本体（カレンダー登録）を妨げない。
+  }
+}
+
+// アンケート・車いす予約など、その他のフォーム記録用（JSONをそのまま保存）。
 function logRow(sheetName, data, extra) {
   try {
     var ss = getSpreadsheet();

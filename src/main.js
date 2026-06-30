@@ -81,7 +81,11 @@ const APP_URL = 'https://hitomikkusu-design.github.io/kure-katsuo-guide/';
 const APP_QR_SRC = 'qr-kure-katsuo-guide.svg';
 const SUBSTACK_URL = 'https://substack.com/@taishomachi';
 const SURVEY_STORAGE_KEY = 'kure-katsuo-guide-survey-responses';
-const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec';
+// アンケート・車いす・会議室予約、すべて kureomiyasan の同じApps Script
+// （＝同じスプレッドシート「久礼大正町予約アプリ」）へ送信し、formType で振り分けます。
+// 旧 hitomikkusu 側エンドポイント（参考・未使用）:
+//   https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec
+const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec';
 
 // 車いす予約は同じApps Scriptに送信し、formType で振り分けます。
 const RENTAL_ENDPOINT = SURVEY_ENDPOINT;
@@ -94,10 +98,8 @@ const rentalDurations = [
   { label: '3時間', minutes: 180 },
 ];
 
-// 2階会議室の予約は、kureomiyasan アカウントの専用Apps Scriptに送信します。
-// （アンケート・車いす予約は SURVEY_ENDPOINT のまま。予約だけ別アカウントで動かし、
-//  kureomiyasan のカレンダーに直接書き込む構成。カレンダー共有が不要になる。）
-const RESERVE_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec';
+// 2階会議室の予約も同じ kureomiyasan のApps Scriptへ（formType:'reservation' で振り分け）。
+const RESERVE_ENDPOINT = SURVEY_ENDPOINT;
 const RESERVE_STORAGE_KEY = 'kure-katsuo-guide-reservations';
 const ROOM_NAME = '2階会議室';
 const RESERVE_OPEN_HOUR = 9; // 受付開始（時）

@@ -58,7 +58,7 @@ function doPost(e) {
       return jsonOutput(createReservation(data));
     }
     if (data.formType === 'rental') {
-      logRow(CONFIG.rentalSheet, data, '');
+      logRentalRow(data);
       return jsonOutput({ ok: true });
     }
     // それ以外はアンケートとして記録
@@ -167,7 +167,7 @@ function logReservationRow(data, eventId) {
     if (!sheet) {
       sheet = ss.insertSheet(CONFIG.reservationSheet);
       sheet.appendRow([
-        '受付日時', '利用日', '開始', '終了', 'お名前', '団体・部署', '電話番号', '人数', '利用目的', 'カレンダーイベントID',
+        '受付日時', '利用日', '開始', '終了', 'お名前', '団体・部署', '電話番号', '人数', '利用目的', '金額', '入金状況', 'カレンダーイベントID',
       ]);
     }
     sheet.appendRow([
@@ -180,6 +180,8 @@ function logReservationRow(data, eventId) {
       data.phone || '',
       data.headcount || '',
       data.purpose || '',
+      data.amount || '',
+      data.paymentStatus || '未入金',
       eventId || '',
     ]);
   } catch (e) {
@@ -187,7 +189,34 @@ function logReservationRow(data, eventId) {
   }
 }
 
-// アンケート・車いす予約など、その他のフォーム記録用（JSONをそのまま保存）。
+// 車いす予約を、列に分けて読みやすくスプレッドシートへ記録する。
+function logRentalRow(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return;
+    var sheet = ss.getSheetByName(CONFIG.rentalSheet);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.rentalSheet);
+      sheet.appendRow([
+        '受付日時', 'お名前', '電話番号', 'ご住所', '利用時間(分)', '開始', '返却予定', '返却予定時刻',
+      ]);
+    }
+    sheet.appendRow([
+      new Date(),
+      data.name || '',
+      data.phone || '',
+      data.address || '',
+      data.minutes || '',
+      data.startAt ? new Date(data.startAt) : '',
+      data.endAt ? new Date(data.endAt) : '',
+      data.endClock || '',
+    ]);
+  } catch (e) {
+    // 記録失敗は本処理を妨げない。
+  }
+}
+
+// アンケートなど、その他のフォーム記録用（JSONをそのまま保存）。
 function logRow(sheetName, data, extra) {
   try {
     var ss = getSpreadsheet();

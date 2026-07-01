@@ -223,10 +223,36 @@ function cancelReservation(data) {
     if (ev) {
       ev.deleteEvent();
     }
+    markRowCancelled(data);
     logCancel(data);
     return { ok: true };
   } catch (e) {
     return { ok: false, message: String(e) };
+  }
+}
+
+// 元の予約行に取り消し線を引き、会議室予約は入金状況を「キャンセル」にする。
+function markRowCancelled(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss || !data.eventId) return;
+    var sheetName = data.resource === 'wheelchair' ? CONFIG.wheelchairSheet : CONFIG.reservationSheet;
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return;
+    var values = sheet.getDataRange().getValues();
+    var lastCol = values.length ? values[0].length : 0;
+    for (var i = 1; i < values.length; i++) {
+      var row = values[i];
+      if (String(row[row.length - 1]) === String(data.eventId)) {
+        sheet.getRange(i + 1, 1, 1, lastCol).setFontLine('line-through');
+        if (sheetName === CONFIG.reservationSheet && lastCol >= 11) {
+          sheet.getRange(i + 1, 11).setValue('キャンセル');
+        }
+        break;
+      }
+    }
+  } catch (e) {
+    // 印付けに失敗しても取消本体は成功扱い。
   }
 }
 

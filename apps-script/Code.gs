@@ -50,6 +50,9 @@ function doGet(e) {
   if (action === 'reservations') {
     return jsonOutput(getReservations(e.parameter.date, e.parameter.resource));
   }
+  if (action === 'lookup') {
+    return jsonOutput(lookupReservations(e.parameter.phone));
+  }
   return jsonOutput({ ok: true, service: 'kure-app', time: new Date().toISOString() });
 }
 
@@ -162,6 +165,53 @@ function getReservations(dateStr, resource) {
       };
     }),
   };
+}
+
+// ===== 予約の確認（電話番号で検索）==============================
+// カレンダーの予約イベント（研修室・車いす）から、説明欄の電話番号が
+// 一致する今日以降の予約を返す（どの端末からでも確認できる）。
+function lookupReservations(phone) {
+  var q = String(phone || '').replace(/[^0-9]/g, '');
+  if (q.length < 6) {
+    return { ok: true, reservations: [] };
+  }
+
+  var cal = getCalendar();
+  var now = new Date();
+  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  var end = new Date(start.getTime() + 1000 * 60 * 60 * 24 * 180); // 180日先まで
+  var events = cal.getEvents(start, end);
+
+  var out = [];
+  for (var i = 0; i < events.length; i++) {
+    var ev = events[i];
+    var t = ev.getTitle();
+    var resource = null;
+    if (t.indexOf(CONFIG.roomTitlePrefix) === 0) {
+      resource = 'room';
+    } else if (t.indexOf(CONFIG.wheelchairTitlePrefix) === 0) {
+      resource = 'wheelchair';
+    }
+    if (!resource) continue;
+
+    var desc = ev.getDescription() || '';
+    var lines = desc.split('\n');
+    var phoneLine = '';
+    for (var j = 0; j < lines.length; j++) {
+      if (lines[j].indexOf('電話:') === 0) phoneLine = lines[j];
+    }
+    var evPhone = phoneLine.replace(/[^0-9]/g, '');
+    if (!evPhone || evPhone.indexOf(q) === -1) continue;
+
+    out.push({
+      resource: resource,
+      title: t,
+      start: ev.getStartTime().toISOString(),
+      end: ev.getEndTime().toISOString(),
+      eventId: ev.getId(),
+    });
+  }
+  return { ok: true, reservations: out };
 }
 
 // ===== 予約の取消 ================================================

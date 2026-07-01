@@ -1,5 +1,5 @@
 const navRoutes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower', 'rental'];
-const routes = [...navRoutes, 'reserve'];
+const routes = [...navRoutes, 'reserve', 'confirm'];
 
 const routeMeta = {
   home: { label: 'ホーム', icon: '🏠', subtitle: '大正町市場で、待つ時間も旅の思い出に。' },
@@ -10,6 +10,7 @@ const routeMeta = {
   tower: { label: '防災', icon: '🌊', subtitle: '海のまちで知っておきたい防災の目印。' },
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
   reserve: { label: '研修室', icon: '📅', subtitle: '2階研修室の空きを見て、その場で予約できます。' },
+  confirm: { label: '予約確認', icon: '🔎', subtitle: '電話番号で予約の確認・取消ができます。' },
 };
 
 
@@ -1718,6 +1719,145 @@ function setupWheelchairReserve() {
   });
 }
 
+// ===== 予約確認（電話番号でどの端末からも） =====
+function confirmPage() {
+  return `
+    <div class="stack">
+      <section class="hero">
+        <p class="hero__eyebrow">RESERVATION LOOKUP</p>
+        <h2>予約の確認・取消</h2>
+        <p>予約時に入力した電話番号を入れると、ご自分の予約（2階研修室・車いす）を確認できます。取り消しもここからできます。</p>
+      </section>
+
+      <form class="reserve-form" id="confirm-form">
+        <label class="reserve-field">
+          <span>電話番号 <em>必須</em></span>
+          <input name="phone" type="tel" maxlength="20" required placeholder="予約時に入力した電話番号" inputmode="tel" />
+        </label>
+        <button class="button button--primary" id="confirm-submit" type="submit">予約を確認する</button>
+      </form>
+
+      <section id="confirm-result" aria-live="polite"></section>
+
+      ${infoCard('確認について', '電話番号が一致する予約を表示します。当日分の取消・変更は事務局へご連絡ください。', 'sea')}
+    </div>
+  `;
+}
+
+async function doConfirmLookup(phone) {
+  const box = document.querySelector('#confirm-result');
+  const submit = document.querySelector('#confirm-submit');
+  if (!box) return;
+  box.innerHTML = '<p class="reserve-loading">確認しています…</p>';
+  if (submit) {
+    submit.setAttribute('aria-disabled', 'true');
+    submit.textContent = '確認中…';
+  }
+
+  let reservations = [];
+  try {
+    if (RESERVE_ENDPOINT) {
+      const res = await fetch(`${RESERVE_ENDPOINT}?action=lookup&phone=${encodeURIComponent(phone)}`, { method: 'GET' });
+      const data = await res.json();
+      reservations = data.reservations || [];
+    }
+  } catch {
+    box.innerHTML = '<div class="my-reservations"><p class="my-reservations__note">確認できませんでした。通信の状態をご確認のうえ、再度お試しください。</p></div>';
+    if (submit) {
+      submit.removeAttribute('aria-disabled');
+      submit.textContent = '予約を確認する';
+    }
+    return;
+  }
+
+  if (submit) {
+    submit.removeAttribute('aria-disabled');
+    submit.textContent = '予約を確認する';
+  }
+  renderConfirmResults(reservations, phone);
+}
+
+function renderConfirmResults(reservations, phone) {
+  const box = document.querySelector('#confirm-result');
+  if (!box) return;
+
+  if (!reservations.length) {
+    box.innerHTML = '<div class="my-reservations"><p class="my-reservations__note">この電話番号のご予約は見つかりませんでした。</p></div>';
+    return;
+  }
+
+  const today = todayISODate();
+  const items = reservations
+    .map((r) => {
+      const s = new Date(r.start);
+      const e = new Date(r.end);
+      const date = `${s.getFullYear()}-${reservePad(s.getMonth() + 1)}-${reservePad(s.getDate())}`;
+      const startTime = `${reservePad(s.getHours())}:${reservePad(s.getMinutes())}`;
+      const endTime = `${reservePad(e.getHours())}:${reservePad(e.getMinutes())}`;
+      const label = r.resource === 'wheelchair' ? '車いす' : '2階研修室';
+      const name = (r.title || '').replace(/^【[^】]*】/, '');
+      const payload = { eventId: r.eventId, resource: r.resource, date, startTime, endTime, name, phone };
+      return `
+        <div class="my-reservation">
+          <div class="my-reservation__info">
+            <strong>${escapeHtml(date)}　${escapeHtml(startTime)}〜${escapeHtml(endTime)}</strong>
+            <span>${escapeHtml(label)}／${escapeHtml(name)} さま</span>
+          </div>
+          ${
+            date > today
+              ? `<button class="button button--secondary my-reservation__cancel" data-confirm-cancel="${escapeHtml(JSON.stringify(payload))}" type="button">取り消す</button>`
+              : '<span class="my-reservation__today">当日分は事務局へ</span>'
+          }
+        </div>
+      `;
+    })
+    .join('');
+
+  box.innerHTML = `
+    <div class="my-reservations">
+      <h3>ご予約内容</h3>
+      ${items}
+      <p class="my-reservations__note">取消は利用日の前日まで可能です。当日の取消・変更は事務局へご連絡ください。</p>
+    </div>
+  `;
+
+  box.querySelectorAll('[data-confirm-cancel]').forEach((btn) => {
+    btn.addEventListener('click', () => cancelFromConfirm(JSON.parse(btn.dataset.confirmCancel), phone));
+  });
+}
+
+async function cancelFromConfirm(payload, phone) {
+  if (!window.confirm(`この予約を取り消しますか？\n${payload.date} ${payload.startTime}〜${payload.endTime}`)) return;
+  try {
+    const res = await fetch(RESERVE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ formType: 'cancel', ...payload }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      window.alert('取り消しに失敗しました。お手数ですが事務局へご連絡ください。');
+      return;
+    }
+    removeStoredReservation(payload.eventId);
+    window.alert('予約を取り消しました。');
+    doConfirmLookup(phone);
+  } catch {
+    window.alert('通信エラーで取り消せませんでした。事務局へご連絡ください。');
+  }
+}
+
+function setupConfirmInteractions() {
+  const form = document.querySelector('#confirm-form');
+  if (!form) return;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const phone = form.elements.phone.value.trim();
+    if (!phone) return;
+    await doConfirmLookup(phone);
+  });
+}
+
 function homePage() {
   return `
     <div class="stack">
@@ -1756,6 +1896,7 @@ function homePage() {
 
       <div class="quick-menu" aria-label="ガイドメニュー">
         <button data-route="reserve" type="button"><span>📅</span>2階研修室の予約</button>
+        <button data-route="confirm" type="button"><span>🔎</span>予約の確認・取消</button>
         <button data-route="survey" type="button"><span>🎮</span>旅の声アンケート</button>
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
@@ -1799,6 +1940,7 @@ function pageFor(route) {
   if (route === 'survey') return surveyPage();
   if (route === 'rental') return rentalPage();
   if (route === 'reserve') return reservePage();
+  if (route === 'confirm') return confirmPage();
   if (route === 'katsuo') {
     return articlePage(
       'katsuo',
@@ -1922,6 +2064,7 @@ function render() {
   setupRentalInteractions();
   setupReserveInteractions();
   setupWheelchairReserve();
+  setupConfirmInteractions();
 
   document.querySelectorAll('[data-audio-id]').forEach((element) => {
     element.addEventListener('click', () => {

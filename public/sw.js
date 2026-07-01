@@ -1,5 +1,5 @@
-const CACHE_NAME = 'kure-katsuo-guide-v12';
-// Keep v10 so PWA clients replace older v6 caches after the PR #3 conflict resolution.
+const CACHE_NAME = 'kure-katsuo-guide-v13';
+// v13: アプリ本体をネットワーク優先に変更（古いキャッシュで壊れて見える問題の対策）。
 const APP_SHELL = ['./', 'index.html', 'tower-warrior.html', 'src/main.js', 'src/styles/global.css', 'manifest.webmanifest', 'icons/icon.svg', 'qr-kure-katsuo-guide.svg'];
 
 self.addEventListener('install', (event) => {
@@ -27,16 +27,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // アプリ本体（HTML/JS/CSS等）はネットワーク優先。オンライン時は必ず最新コードを取得し、
+  // 取得できたものをキャッシュ更新。オフライン時のみキャッシュ（無ければトップ）を返す。
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match('./'));
-    }),
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./'))),
   );
 });

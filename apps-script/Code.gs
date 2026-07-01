@@ -60,6 +60,9 @@ function doPost(e) {
     if (data.formType === 'reservation') {
       return jsonOutput(createReservation(data));
     }
+    if (data.formType === 'cancel') {
+      return jsonOutput(cancelReservation(data));
+    }
     if (data.formType === 'rental') {
       logRentalRow(data);
       return jsonOutput({ ok: true });
@@ -159,6 +162,48 @@ function getReservations(dateStr, resource) {
       };
     }),
   };
+}
+
+// ===== 予約の取消 ================================================
+// カレンダーの予定を削除して空きを戻し、「キャンセル」シートに履歴を残す。
+function cancelReservation(data) {
+  try {
+    var cal = getCalendar();
+    var ev = data.eventId ? cal.getEventById(data.eventId) : null;
+    if (ev) {
+      ev.deleteEvent();
+    }
+    logCancel(data);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: String(e) };
+  }
+}
+
+function logCancel(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return;
+    var sheet = ss.getSheetByName('キャンセル');
+    if (!sheet) {
+      sheet = ss.insertSheet('キャンセル');
+      sheet.appendRow([
+        '取消日時', '種別', '利用日', '開始', '終了', 'お名前', '電話番号', 'カレンダーイベントID',
+      ]);
+    }
+    sheet.appendRow([
+      new Date(),
+      data.resource === 'wheelchair' ? '車いす事前予約' : '2階研修室',
+      data.date || '',
+      data.startTime || '',
+      data.endTime || '',
+      data.name || '',
+      data.phone || '',
+      data.eventId || '',
+    ]);
+  } catch (e) {
+    // 記録失敗は取消本体を妨げない。
+  }
 }
 
 // ===== 記録（スプレッドシート）==================================

@@ -843,6 +843,7 @@ function rentalPage() {
       </form>
 
       <section id="wc-reserve-result" aria-live="polite"></section>
+      <section id="my-wc-reservations"></section>
 
       ${infoCard('返却のお知らせについて', '返却予定時刻になると、このスマホで音とバイブでお知らせします。確実にお知らせするため、画面を開いたままにするか、ホーム画面に追加したアプリでご利用ください。お知らせを許可すると、より気づきやすくなります。', 'sun')}
       ${infoCard('お店からの呼び出しについて', 'ご予約はお店の名簿にも記録されます。返却時間を過ぎた場合、お店のスタッフからお電話でご連絡することがあります。')}
@@ -1053,6 +1054,99 @@ function saveReservation(reservation) {
   window.localStorage.setItem(RESERVE_STORAGE_KEY, JSON.stringify(list.slice(0, 30)));
 }
 
+function removeStoredReservation(eventId) {
+  const list = getStoredReservations().filter((r) => r.eventId !== eventId);
+  window.localStorage.setItem(RESERVE_STORAGE_KEY, JSON.stringify(list));
+}
+
+// この端末で予約した内容を一覧表示し、取消ボタンを付ける（前日まで取消可）。
+function renderMyReservations(resource, containerSelector) {
+  const box = document.querySelector(containerSelector);
+  if (!box) return;
+  const today = todayISODate();
+  const mine = getStoredReservations().filter(
+    (r) => (r.resource || 'room') === resource && r.eventId && r.date >= today,
+  );
+
+  if (mine.length === 0) {
+    box.innerHTML = '';
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="my-reservations">
+      <h3>この端末で予約した内容</h3>
+      ${mine
+        .map(
+          (r) => `
+            <div class="my-reservation">
+              <div class="my-reservation__info">
+                <strong>${escapeHtml(r.date)}　${escapeHtml(r.startTime)}〜${escapeHtml(r.endTime)}</strong>
+                <span>${escapeHtml(r.name)} さま${r.amount ? `／${escapeHtml(r.amount)}` : ''}</span>
+              </div>
+              ${
+                r.date > today
+                  ? `<button class="button button--secondary my-reservation__cancel" data-cancel-event="${escapeHtml(r.eventId)}" data-resource="${resource}" type="button">取り消す</button>`
+                  : '<span class="my-reservation__today">当日分は事務局へ</span>'
+              }
+            </div>
+          `,
+        )
+        .join('')}
+      <p class="my-reservations__note">取消は利用日の前日まで可能です。当日の取消・変更は事務局へご連絡ください。</p>
+    </div>
+  `;
+
+  box.querySelectorAll('[data-cancel-event]').forEach((btn) => {
+    btn.addEventListener('click', () => requestCancel(btn.dataset.cancelEvent, btn.dataset.resource));
+  });
+}
+
+async function requestCancel(eventId, resource) {
+  const target = getStoredReservations().find((r) => r.eventId === eventId);
+  if (!target) return;
+  if (!window.confirm(`この予約を取り消しますか？\n${target.date} ${target.startTime}〜${target.endTime}`)) return;
+
+  try {
+    if (RESERVE_ENDPOINT) {
+      const res = await fetch(RESERVE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          formType: 'cancel',
+          eventId,
+          resource,
+          date: target.date,
+          startTime: target.startTime,
+          endTime: target.endTime,
+          name: target.name,
+          phone: target.phone,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        window.alert('取り消しに失敗しました。お手数ですが事務局へご連絡ください。');
+        return;
+      }
+    }
+
+    removeStoredReservation(eventId);
+    window.alert('予約を取り消しました。');
+
+    if (resource === 'wheelchair') {
+      renderMyReservations('wheelchair', '#my-wc-reservations');
+      const wcForm = document.querySelector('#wc-reserve-form');
+      if (wcForm) renderReserveAvailability(wcForm.elements.date.value, 'wheelchair', '#wc-slot-grid');
+    } else {
+      renderMyReservations('room', '#my-room-reservations');
+      const rForm = document.querySelector('#reserve-form');
+      if (rForm) renderReserveAvailability(rForm.elements.date.value, 'room', '#slot-grid');
+    }
+  } catch {
+    window.alert('通信エラーで取り消せませんでした。事務局へご連絡ください。');
+  }
+}
+
 function reservePad(n) {
   return String(n).padStart(2, '0');
 }
@@ -1183,6 +1277,7 @@ function reservePage() {
       </form>
 
       <section id="reserve-result" aria-live="polite"></section>
+      <section id="my-room-reservations"></section>
 
       ${infoCard('お支払い（銀行振込・前払い）', `ご予約後、画面に表示される金額を${BANK_INFO.deadlineText}にお振込みください。振込手数料はご負担をお願いします。入金確認をもって予約確定となります。`, 'sun')}
       ${infoCard('ダブルブッキングの防止について', '予約時にサーバー側（Google Apps Script）でカレンダーを再確認し、同じ時間帯にすでに予約があれば登録せずお知らせします。複数の人が同時に予約しても二重予約になりません。')}
@@ -1439,6 +1534,7 @@ function setupReserveInteractions() {
   form.addEventListener('change', updateReserveFee);
   form.addEventListener('input', updateReserveFee);
   updateReserveFee();
+  renderMyReservations('room', '#my-room-reservations');
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -1473,6 +1569,7 @@ function setupReserveInteractions() {
         updateReserveFee();
       }
       renderReserveAvailability(dateInput.value);
+      renderMyReservations('room', '#my-room-reservations');
     }
   });
 }
@@ -1582,6 +1679,7 @@ function setupWheelchairReserve() {
   const dateInput = form.elements.date;
   renderReserveAvailability(dateInput.value, 'wheelchair', '#wc-slot-grid');
   dateInput.addEventListener('change', () => renderReserveAvailability(dateInput.value, 'wheelchair', '#wc-slot-grid'));
+  renderMyReservations('wheelchair', '#my-wc-reservations');
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -1615,6 +1713,7 @@ function setupWheelchairReserve() {
         if (!dateInput.value) dateInput.value = tomorrowISODate();
       }
       renderReserveAvailability(dateInput.value, 'wheelchair', '#wc-slot-grid');
+      renderMyReservations('wheelchair', '#my-wc-reservations');
     }
   });
 }

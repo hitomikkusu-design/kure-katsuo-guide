@@ -70,8 +70,8 @@ function doPost(e) {
       logRentalRow(data);
       return jsonOutput({ ok: true });
     }
-    // それ以外はアンケートとして記録
-    logRow(CONFIG.surveySheet, data, '');
+    // それ以外はアンケートとして記録（項目別に列分け）
+    logSurveyRow(data);
     return jsonOutput({ ok: true });
   } catch (err) {
     return jsonOutput({ ok: false, reason: 'bad_request', message: String(err) });
@@ -376,7 +376,40 @@ function logWheelchairRow(data, eventId) {
   }
 }
 
-// アンケートなど、その他のフォーム記録用（JSONをそのまま保存）。
+// アンケートを、設問ごとに列分けして記録する（集計しやすいように）。
+// 列: 受付日時 / 各設問（選択＋自由記入をまとめる） / 自由コメント / 活用可否
+function logSurveyRow(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return;
+    var answers = data.answers || [];
+    var sheet = ss.getSheetByName(CONFIG.surveySheet);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.surveySheet);
+      var header = ['受付日時'];
+      for (var h = 0; h < answers.length; h++) {
+        header.push(answers[h].label || ('設問' + (h + 1)));
+      }
+      header.push('自由コメント');
+      header.push('活用可否');
+      sheet.appendRow(header);
+    }
+    var row = [new Date()];
+    for (var i = 0; i < answers.length; i++) {
+      var a = answers[i] || {};
+      var vals = (a.values || []).slice();
+      if (a.text) vals.push(a.text);
+      row.push(vals.join(' / '));
+    }
+    row.push(data.comment || '');
+    row.push(data.shareable ? '可' : '');
+    sheet.appendRow(row);
+  } catch (e) {
+    // 記録失敗は送信本体を妨げない。
+  }
+}
+
+// その他のフォーム記録用（JSONをそのまま保存・予備）。
 function logRow(sheetName, data, extra) {
   try {
     var ss = getSpreadsheet();

@@ -1988,8 +1988,8 @@ function pageFor(route) {
           <li class="evacuation-item">
             <span class="evacuation-item__icon">🏛️</span>
             <div class="evacuation-item__body">
-              <strong>町民交流会館</strong>
-              <span>避難場所として指定されています。</span>
+              <strong>中土佐町民交流会館</strong>
+              <span>海抜約5〜6m。RC造2階建ての指定避難所。津波時は2階以上へ。</span>
             </div>
             <a class="evacuation-item__map" href="https://maps.app.goo.gl/EvAHWMeksnKiWUDh8" target="_blank" rel="noopener">地図</a>
           </li>

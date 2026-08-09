@@ -1,4 +1,4 @@
-name: Deploy static PWA to GitHub Pages
+name: Deploy Nishimura Kashi to GitHub Pages
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build static PWA
+      - name: Build website
         run: npm run build
 
       - name: Setup Pages

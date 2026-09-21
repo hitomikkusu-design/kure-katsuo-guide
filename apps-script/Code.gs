@@ -5,6 +5,7 @@
  *   - 2階会議室の予約（formType:'reservation'）→ Googleカレンダー登録（ダブルブッキング防止）
  *   - 空き状況の取得（GET ?action=reservations&date=YYYY-MM-DD）
  *   - 車いす予約（formType:'rental'）→ スプレッドシートに記録
+ *   - 美容液アンケート（formType:'beautySurvey'）→ 専用シートに記録
  *   - アンケート（formTypeなし）→ スプレッドシートに記録
  *
  * ■ 張り替え手順（既存スクリプトを丸ごと置き換える場合）
@@ -35,13 +36,15 @@ var CONFIG = {
 
   // 記録用スプレッドシートID。空欄なら、このスクリプトに紐づくシート（あれば）を使います。
   // 記録だけ不要なら空欄のままで構いません（予約のカレンダー登録には影響しません）。
-  spreadsheetId: '',
+  // 「大正町待ち時間アンケートAPP」（https://docs.google.com/spreadsheets/d/1otnC0sYf9SHU859goMjgYhh2KwocXD_aKpt1iTkqN9E/）を記録先に固定。
+  spreadsheetId: '1otnC0sYf9SHU859goMjgYhh2KwocXD_aKpt1iTkqN9E',
 
   // 記録先シート名（無ければ自動作成）。
   surveySheet: 'アンケート',
   rentalSheet: '車いす予約',
   reservationSheet: '会議室予約',
   wheelchairSheet: '車いす事前予約',
+  beautySurveySheet: '美容液アンケート',
 };
 
 // ===== エントリーポイント ========================================
@@ -58,7 +61,7 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    var data = JSON.parse(e.postData.contents);
+    var data = JSON.parse(decodePostContents(e.postData.contents));
 
     if (data.formType === 'reservation') {
       return jsonOutput(createReservation(data));
@@ -68,6 +71,10 @@ function doPost(e) {
     }
     if (data.formType === 'rental') {
       logRentalRow(data);
+      return jsonOutput({ ok: true });
+    }
+    if (data.formType === 'beautySurvey') {
+      logBeautySurveyRow(data);
       return jsonOutput({ ok: true });
     }
     // それ以外はアンケートとして記録（項目別に列分け）
@@ -409,6 +416,32 @@ function logSurveyRow(data) {
   }
 }
 
+// 美容液アンケートを、専用シートに設問ごと列分けして記録する（1問1回答のみ）。
+// 列: 受付日時 / 各設問（単一回答）
+function logBeautySurveyRow(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return;
+    var answers = data.answers || [];
+    var sheet = ss.getSheetByName(CONFIG.beautySurveySheet);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.beautySurveySheet);
+      var header = ['受付日時'];
+      for (var h = 0; h < answers.length; h++) {
+        header.push(answers[h].label || ('設問' + (h + 1)));
+      }
+      sheet.appendRow(header);
+    }
+    var row = [new Date()];
+    for (var i = 0; i < answers.length; i++) {
+      row.push((answers[i] && answers[i].value) || '');
+    }
+    sheet.appendRow(row);
+  } catch (e) {
+    // 記録失敗は送信本体を妨げない。
+  }
+}
+
 // その他のフォーム記録用（JSONをそのまま保存・予備）。
 function logRow(sheetName, data, extra) {
   try {
@@ -418,6 +451,18 @@ function logRow(sheetName, data, extra) {
     sheet.appendRow([new Date(), JSON.stringify(data), extra || '']);
   } catch (e) {
     // 記録失敗は予約・送信本体を妨げない。
+  }
+}
+
+// e.postData.contents は Content-Type:'text/plain' だと絵文字（サロゲートペア）が
+// 文字化けすることがあるため、アプリ側は本文を percent-encode して送ってくる。
+// ここで decodeURIComponent して元のJSON文字列に戻す（古いキャッシュ済みアプリからの
+// 生JSON送信にも '%' を含まなければ影響なく対応できる）。
+function decodePostContents(contents) {
+  try {
+    return decodeURIComponent(contents);
+  } catch (e) {
+    return contents;
   }
 }
 

@@ -1281,6 +1281,10 @@ button {
   background: linear-gradient(135deg, #0b4f57 0%, #12808c 100%);
 }
 
+.beauty-banner {
+  background: linear-gradient(135deg, #2f7d4f 0%, #59a973 100%);
+}
+
 .reserve-deadline {
   margin: 10px 0 0;
   color: var(--danger);

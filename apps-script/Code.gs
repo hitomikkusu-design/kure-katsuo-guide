@@ -61,7 +61,7 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    var data = JSON.parse(e.postData.contents);
+    var data = JSON.parse(decodePostContents(e.postData.contents));
 
     if (data.formType === 'reservation') {
       return jsonOutput(createReservation(data));
@@ -451,6 +451,18 @@ function logRow(sheetName, data, extra) {
     sheet.appendRow([new Date(), JSON.stringify(data), extra || '']);
   } catch (e) {
     // 記録失敗は予約・送信本体を妨げない。
+  }
+}
+
+// e.postData.contents は Content-Type:'text/plain' だと絵文字（サロゲートペア）が
+// 文字化けすることがあるため、アプリ側は本文を percent-encode して送ってくる。
+// ここで decodeURIComponent して元のJSON文字列に戻す（古いキャッシュ済みアプリからの
+// 生JSON送信にも '%' を含まなければ影響なく対応できる）。
+function decodePostContents(contents) {
+  try {
+    return decodeURIComponent(contents);
+  } catch (e) {
+    return contents;
   }
 }
 

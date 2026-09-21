@@ -84,11 +84,21 @@ const APP_QR_SRC = 'qr-kure-katsuo-guide.svg';
 const SUBSTACK_URL = 'https://substack.com/@taishomachi';
 const SURVEY_STORAGE_KEY = 'kure-katsuo-guide-survey-responses';
 const BEAUTY_SURVEY_STORAGE_KEY = 'kure-katsuo-guide-beauty-survey-responses';
-// アンケート・車いす・会議室予約、すべて kureomiyasan の同じApps Script
+// アンケート・車いす・会議室予約・美容液アンケート、すべて hitomikkusu の同じApps Script
 // （＝同じスプレッドシート「大正町待ち時間アンケートAPP」）へ送信し、formType で振り分けます。
-// 旧 hitomikkusu 側エンドポイント（参考・未使用）:
-//   https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec
-const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec';
+// 旧 kureomiyasan 側エンドポイント（参考・過去データはこちらのスプレッドシート「久礼大正町予約アプリ」に残っています）:
+//   https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec
+const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec';
+
+// Apps Script の e.postData.contents は 'text/plain' だと絵文字（サロゲートペア）を
+// 正しく復元できず文字化けするため、送信前に percent-encode する（doPost 側で decodeURIComponent）。
+function postJsonToAppsScript(url, payload) {
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: encodeURIComponent(JSON.stringify(payload)),
+  });
+}
 
 // 美容液アンケートも同じApps Scriptへ（formType:'beautySurvey' で振り分け、専用シートに記録）。
 const BEAUTY_SURVEY_ENDPOINT = SURVEY_ENDPOINT;
@@ -104,7 +114,7 @@ const rentalDurations = [
   { label: '3時間', minutes: 180 },
 ];
 
-// 2階研修室の予約も同じ kureomiyasan のApps Scriptへ（formType:'reservation' で振り分け）。
+// 2階研修室の予約も同じApps Scriptへ（formType:'reservation' で振り分け）。
 const RESERVE_ENDPOINT = SURVEY_ENDPOINT;
 const RESERVE_STORAGE_KEY = 'kure-katsuo-guide-reservations';
 const ROOM_NAME = '2階研修室';
@@ -792,11 +802,7 @@ function setupSurveyInteractions() {
     renderSurveyShareCard(response);
 
     if (SURVEY_ENDPOINT) {
-      await fetch(SURVEY_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(response),
-      });
+      await postJsonToAppsScript(SURVEY_ENDPOINT, response);
     }
 
     window.alert('旅メモカードを作成しました。回答はこの端末に保存されています。');
@@ -891,11 +897,7 @@ function setupBeautySurveyInteractions() {
 
     if (BEAUTY_SURVEY_ENDPOINT) {
       try {
-        await fetch(BEAUTY_SURVEY_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(response),
-        });
+        await postJsonToAppsScript(BEAUTY_SURVEY_ENDPOINT, response);
       } catch {
         // 通信できなくても、回答は端末内に保存済みなので送信完了として扱う。
       }
@@ -1214,11 +1216,7 @@ function setupRentalInteractions() {
     form.reset();
 
     if (RENTAL_ENDPOINT) {
-      fetch(RENTAL_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ formType: 'rental', ...rental }),
-      }).catch(() => {
+      postJsonToAppsScript(RENTAL_ENDPOINT, { formType: 'rental', ...rental }).catch(() => {
         /* 送信失敗してもローカルのタイマーは動く */
       });
     }
@@ -1298,19 +1296,15 @@ async function requestCancel(eventId, resource) {
 
   try {
     if (RESERVE_ENDPOINT) {
-      const res = await fetch(RESERVE_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          formType: 'cancel',
-          eventId,
-          resource,
-          date: target.date,
-          startTime: target.startTime,
-          endTime: target.endTime,
-          name: target.name,
-          phone: target.phone,
-        }),
+      const res = await postJsonToAppsScript(RESERVE_ENDPOINT, {
+        formType: 'cancel',
+        eventId,
+        resource,
+        date: target.date,
+        startTime: target.startTime,
+        endTime: target.endTime,
+        name: target.name,
+        phone: target.phone,
       });
       const data = await res.json();
       if (!data.ok) {
@@ -1687,11 +1681,7 @@ async function submitReservation(form) {
   }
 
   // サーバー側でカレンダーを確認し、空いていれば登録（ダブルブッキング防止の本判定）
-  const res = await fetch(RESERVE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(reservation),
-  });
+  const res = await postJsonToAppsScript(RESERVE_ENDPOINT, reservation);
   const data = await res.json();
 
   if (data.ok) {
@@ -1833,11 +1823,7 @@ async function submitWheelchairReserve(form) {
     };
   }
 
-  const res = await fetch(RESERVE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(reservation),
-  });
+  const res = await postJsonToAppsScript(RESERVE_ENDPOINT, reservation);
   const data = await res.json();
 
   if (data.ok) {
@@ -2017,11 +2003,7 @@ function renderConfirmResults(reservations, phone) {
 async function cancelFromConfirm(payload, phone) {
   if (!window.confirm(`この予約を取り消しますか？\n${payload.date} ${payload.startTime}〜${payload.endTime}`)) return;
   try {
-    const res = await fetch(RESERVE_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ formType: 'cancel', ...payload }),
-    });
+    const res = await postJsonToAppsScript(RESERVE_ENDPOINT, { formType: 'cancel', ...payload });
     const data = await res.json();
     if (!data.ok) {
       window.alert('取り消しに失敗しました。お手数ですが事務局へご連絡ください。');

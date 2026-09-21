@@ -204,7 +204,7 @@ PR #3 では、既存のガイド構成や音声ガイド方針を残したま�
 
 ホームの「美容液について教えてください」バナー、またはメニューの「美容液アンケート」から開けます（ルート: `beauty`）。カツオ由来の成分「エラスチン」を配合した美容液の企画に向けた、匿名の顧客アンケートです。
 
-- **設問**: `src/main.js` の `beautySurveyQuestions` で管理します。肌の悩み、直近購入した美容液の価格帯、企画商品への購入意向、購入判断材料、許容予算の5問（すべて単一選択）。イントロ文は `beautySurveyIntro` にあります。
+- **設問**: `src/main.js` の `beautySurveyQuestions` で管理します。お住まいの地域（都道府県のおおまかな区分）・性別・年代の回答者属性3問に加え、肌の悩み、直近購入した美容液の価格帯、企画商品への購入意向、購入判断材料、許容予算の5問、計8問（すべて単一選択）。イントロ文は `beautySurveyIntro` にあります。
 - **送信先**: 既存のアンケートと同じApps Script（`BEAUTY_SURVEY_ENDPOINT` = `SURVEY_ENDPOINT`）へ `formType:'beautySurvey'` として送信します。回答は端末内の `localStorage`（`BEAUTY_SURVEY_STORAGE_KEY`）にも保存されます。
 - **記録先シート**: 既存の「アンケート」シートとは別に、`apps-script/Code.gs` の `CONFIG.beautySurveySheet`（既定「美容液アンケート」）という専用シートへ、設問ごとに列分けして記録されます（`logBeautySurveyRow`）。既存の旅アンケート集計とは混ざりません。
 - Apps Scriptを更新（`apps-script/Code.gs` を貼り替えて再デプロイ）するまでは、回答の送信は行われますがスプレッドシートには記録されません。

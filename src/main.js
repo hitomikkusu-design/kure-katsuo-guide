@@ -223,6 +223,30 @@ const beautySurveyIntro = {
 
 const beautySurveyQuestions = [
   {
+    id: 'residence',
+    shortLabel: 'お住まいの地域',
+    icon: '📍',
+    prompt: 'だいたい、どこの都道府県にお住まいですか？',
+    note: '〈１つ選択・わかる範囲でOK〉',
+    options: ['高知県', '四国（高知県外）', '関西', '中国地方', '九州', '中部・北陸', '関東', '東北・北海道', '海外', '回答しない'],
+  },
+  {
+    id: 'gender',
+    shortLabel: '性別',
+    icon: '🚻',
+    prompt: '性別を教えてください。',
+    note: '〈１つ選択〉',
+    options: ['女性', '男性', 'その他', '回答しない'],
+  },
+  {
+    id: 'ageGroup',
+    shortLabel: '年代',
+    icon: '🎂',
+    prompt: '年代を教えてください。',
+    note: '〈１つ選択〉',
+    options: ['10代以下', '20代', '30代', '40代', '50代', '60代以上', '回答しない'],
+  },
+  {
     id: 'skinConcern',
     shortLabel: '肌の悩み',
     icon: '🧴',

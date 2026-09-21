@@ -11,7 +11,7 @@ const routeMeta = {
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
   reserve: { label: '研修室', icon: '📅', subtitle: '2階研修室の空きを見て、その場で予約できます。' },
   confirm: { label: '予約確認', icon: '🔎', subtitle: '電話番号で予約の確認・取消ができます。' },
-  beauty: { label: '美容液アンケート', icon: '🌿', subtitle: '約1分・カツオ由来の美容液アンケートです。' },
+  beauty: { label: '商品アンケート', icon: '🌿', subtitle: '約2分・カツオ由来エラスチンの商品企画アンケートです。' },
 };
 
 
@@ -224,9 +224,9 @@ const surveyQuestions = [
 ];
 
 const beautySurveyIntro = {
-  eyebrow: 'ABOUT 1 MIN',
-  title: '美容液について教えてください🌿',
-  lead: '高知のカツオ由来の成分「エラスチン」を配合した美容液を企画しています。商品づくりの参考に、率直なお気持ちを教えてください。購入をお願いするものではありません。匿名で回答できます。',
+  eyebrow: 'ABOUT 2 MIN',
+  title: 'このサプリ、買いますか？🐟',
+  lead: '高知・久礼のカツオから採れる成分「エラスチン」を使った商品を企画しています。第一号はサプリメントを予定しています。「買わない」というお答えがいちばん参考になりますので、率直にお聞かせください。販売や勧誘は一切ありません。匿名で回答できます。',
 };
 
 const beautySurveyQuestions = [
@@ -255,57 +255,148 @@ const beautySurveyQuestions = [
     options: ['10代以下', '20代', '30代', '40代', '50代', '60代以上', '回答しない'],
   },
   {
-    id: 'skinConcern',
-    shortLabel: '肌の悩み',
-    icon: '🧴',
-    prompt: '今、お肌でいちばん気になることは？',
+    id: 'supplementHabit',
+    shortLabel: 'サプリ習慣',
+    icon: '💊',
+    prompt: 'サプリメントを飲む習慣はありますか？',
     note: '〈１つ選択〉',
-    options: ['乾燥', 'ハリ・弾力の不足', 'シミ・くすみ', '毛穴', 'その他', '特にない'],
-  },
-  {
-    id: 'lastPurchasePrice',
-    shortLabel: '直近購入価格',
-    icon: '💴',
-    prompt: '直近３か月で、自分用に購入した美容液１本の価格は？',
-    note: '〈複数購入した方は、最後に買ったもの〉',
-    options: ['2,000円未満', '2,000〜3,999円', '4,000〜5,999円', '6,000円以上', '購入していない'],
+    options: ['毎日飲んでいる', 'ときどき飲む', '以前は飲んでいた', '飲んだことはない'],
   },
   {
     id: 'purchaseIntent',
-    shortLabel: '購入意向',
-    icon: '🧪',
-    prompt: '次の美容液が発売されたら、購入したいと思いますか？',
-    note: '【企画中の商品】カツオ由来のエラスチンを配合した、肌の保湿・ハリのお手入れ用美容液。約１か月分・税込3,980円を想定しています。※仕様・価格は未定です。',
+    shortLabel: '購入意向（3,980円）',
+    icon: '🐟',
+    prompt: 'この商品が発売されたら、購入したいと思いますか？',
+    note:
+      '【企画中の商品】高知・久礼のカツオ由来エラスチンを配合したサプリメント。１日１粒（エラスチン100mg）・約１か月分で税込3,980円を想定しています。※仕様・価格は未定です。',
     options: [
       'この価格で購入したい',
-      'お試しサイズを使い、気に入ればこの価格で購入したい',
+      'お試しサイズがあれば購入したい',
+      'もう少し安ければ購入したい',
       '詳しい情報を見てから判断したい',
-      'この価格では購入したくない',
-      '価格に関係なく購入したくない',
+      'この価格では購入しない',
+      '価格に関係なくサプリは購入しない',
     ],
   },
   {
-    id: 'decisionFactor',
-    shortLabel: '判断材料',
-    icon: '🔍',
-    prompt: '購入を判断するために、いちばん確認したいことは？',
-    note: '〈１つ選択〉',
+    id: 'alternative',
+    shortLabel: '買うとしたら何なら',
+    icon: '🔁',
+    prompt: 'このサプリを買わないとしたら、どんな商品でなら買いたいですか？',
+    type: 'multi',
+    optional: true,
+    other: true,
+    note: '〈いくつでも・任意〉買わない理由の裏返しを教えてください。',
     options: [
-      '保湿・ハリに関する試験結果',
-      '自分の肌に合うか',
-      'におい・べたつきなどの使い心地',
-      '全成分や魚由来成分のアレルギー情報',
-      '口コミ・利用者の感想',
-      'その他',
+      'もっと価格が安ければ',
+      '１週間などのお試しサイズがあれば',
+      '機能性表示食品（国への届出）であれば',
+      '効果の試験データが示されていれば',
+      '医師や専門家がすすめていれば',
+      '飲みやすい形（粒が小さいなど）なら',
+      'サプリより、塗る美容液なら',
+      'サプリより、食べもの（缶詰・出汁・ふりかけなど）なら',
+      '定期購入で割安になるなら',
+      '贈り物にできる見た目なら',
+      'どんな商品でも購入しない',
     ],
+  },
+  {
+    id: 'purpose',
+    shortLabel: '買いたい用途',
+    icon: '🎯',
+    prompt: 'どんな目的の商品なら、お金を出してもよいと思いますか？',
+    type: 'multi',
+    optional: true,
+    other: true,
+    note: '〈いくつでも・任意〉',
+    options: [
+      '肌のうるおい・ハリ',
+      'シミ・くすみ対策',
+      'ひざ・関節のなめらかさ',
+      '髪や爪の健康',
+      '疲れにくさ',
+      '眠りの質',
+      '血管のしなやかさ',
+      '家族や自分へのお土産・贈り物',
+      '目的がはっきりしていれば何でも',
+      '買うつもりはない',
+    ],
+  },
+  {
+    id: 'productType',
+    shortLabel: 'サプリか美容液か',
+    icon: '⚖️',
+    prompt: '同じ成分なら、飲むサプリと塗る美容液、どちらが欲しいですか？',
+    note: '〈１つ選択・任意〉',
+    optional: true,
+    options: ['飲むサプリ', '塗る美容液', '両方ほしい', 'どちらも欲しくない', '決められない'],
+  },
+  {
+    id: 'form',
+    shortLabel: '続けやすい形',
+    icon: '🥄',
+    prompt: '続けるとしたら、どの形がよいですか？',
+    note: '〈１つ選択・任意〉',
+    optional: true,
+    options: ['小さな粒・カプセル', '粉末（スティック）', 'ドリンク', 'ゼリー', '口の中で溶けるフィルム', 'ふだんの食事に混ぜられるもの', 'こだわらない'],
   },
   {
     id: 'budget',
-    shortLabel: '許容予算',
+    shortLabel: '許容予算（月）',
     icon: '💰',
-    prompt: '約１か月分なら、いくらまで購入を検討できますか？',
+    prompt: '約１か月分なら、いくらまで出せますか？',
     note: '〈１つ選択〉',
-    options: ['2,000円未満', '2,000〜2,999円', '3,000〜3,999円', '4,000〜4,999円', '5,000円以上', '今の情報では判断できない', '購入は考えていない'],
+    options: [
+      '1,999円以下',
+      '2,000〜2,999円',
+      '3,000〜3,999円',
+      '4,000〜4,999円',
+      '5,000〜7,999円',
+      '8,000円以上',
+      '今の情報では判断できない',
+      '買うつもりはない',
+    ],
+  },
+  {
+    id: 'channel',
+    shortLabel: '買いたい場所',
+    icon: '🛒',
+    prompt: 'もし買うとしたら、どこで買いたいですか？',
+    type: 'multi',
+    optional: true,
+    note: '〈いくつでも・任意〉',
+    options: [
+      'Amazon・楽天など通販サイト',
+      '公式サイトの定期便',
+      'ドラッグストア・薬局',
+      '道の駅・市場などの店頭',
+      '百貨店やギフト売り場',
+      'テレビ通販',
+      'SNSの投稿や広告から',
+      '買うつもりはない',
+    ],
+  },
+  {
+    id: 'hesitation',
+    shortLabel: 'ためらう理由',
+    icon: '🚧',
+    prompt: '買うのをためらうとしたら、理由はどれですか？',
+    type: 'multi',
+    optional: true,
+    other: true,
+    note: '〈いくつでも・任意〉',
+    options: [
+      '価格が高い',
+      '効果がわからない',
+      'カツオ（魚）由来が気になる',
+      '魚アレルギーが心配',
+      'においや味が心配',
+      '飲み続ける自信がない',
+      'すでに使っているものがある',
+      '知らないブランドだから',
+      'ためらう理由はない',
+    ],
   },
 ];
 
@@ -823,6 +914,9 @@ function saveBeautySurveyResponse(response) {
 }
 
 function beautySurveyQuestionCard(question, index) {
+  const inputType = question.type === 'multi' ? 'checkbox' : 'radio';
+  const required = question.type === 'multi' || question.optional ? '' : 'required';
+
   return `
     <fieldset class="survey-question" data-beauty-survey-question="${question.id}">
       <legend>
@@ -836,13 +930,21 @@ function beautySurveyQuestionCard(question, index) {
           .map(
             (option) => `
               <label class="survey-chip">
-                <input type="radio" name="${question.id}" value="${option}" required />
+                <input type="${inputType}" name="${question.id}" value="${option}" ${required} />
                 <span>${option}</span>
               </label>
             `,
           )
           .join('')}
       </div>
+      ${
+        question.other
+          ? `<label class="survey-free-text">
+              <span>その他・ひとこと（任意）</span>
+              <input type="text" name="${question.id}__other" placeholder="自由にご記入ください" />
+            </label>`
+          : ''
+      }
     </fieldset>
   `;
 }
@@ -859,6 +961,16 @@ function beautySurveyPage() {
       <form class="survey-form" id="beauty-survey-form">
         ${beautySurveyQuestions.map(beautySurveyQuestionCard).join('')}
 
+        <label class="survey-free-text survey-free-text--textarea">
+          <span>「こんな商品なら買う」というご意見があれば、ぜひ教えてください（任意）</span>
+          <textarea name="freeComment" rows="3" placeholder="価格・使い方・見た目など、思いついたことをそのまま書いてください"></textarea>
+        </label>
+
+        <label class="survey-free-text survey-free-text--textarea">
+          <span>試作品のモニターに興味がある方は、メールアドレスをどうぞ（任意）</span>
+          <input type="email" name="monitorEmail" placeholder="example@example.com" />
+        </label>
+
         <button class="button button--primary survey-submit" type="submit">回答を送る</button>
       </form>
 
@@ -872,10 +984,20 @@ function beautySurveyPage() {
 }
 
 function collectBeautySurveyAnswer(form, question) {
-  return {
-    label: question.shortLabel,
-    value: form.elements[question.id]?.value || '',
-  };
+  let value = '';
+
+  if (question.type === 'multi') {
+    value = Array.from(form.querySelectorAll(`input[name="${question.id}"]:checked`))
+      .map((input) => input.value)
+      .join(' / ');
+  } else {
+    value = form.elements[question.id]?.value || '';
+  }
+
+  const other = form.elements[`${question.id}__other`]?.value.trim();
+  if (other) value = value ? `${value} / ${other}` : other;
+
+  return { label: question.shortLabel, value };
 }
 
 function setupBeautySurveyInteractions() {
@@ -888,7 +1010,11 @@ function setupBeautySurveyInteractions() {
       formType: 'beautySurvey',
       id: `beauty-${Date.now()}`,
       createdAt: new Date().toISOString(),
-      answers: beautySurveyQuestions.map((question) => collectBeautySurveyAnswer(form, question)),
+      answers: [
+        ...beautySurveyQuestions.map((question) => collectBeautySurveyAnswer(form, question)),
+        { label: '自由記入', value: form.elements.freeComment?.value.trim() || '' },
+        { label: 'モニター希望メール', value: form.elements.monitorEmail?.value.trim() || '' },
+      ],
     };
 
     saveBeautySurveyResponse(response);
@@ -2061,8 +2187,8 @@ function homePage() {
       <button class="survey-game-banner beauty-banner" data-route="beauty" type="button">
         <span class="survey-game-banner__icon">🌿</span>
         <div class="survey-game-banner__body">
-          <strong>美容液について教えてください</strong>
-          <span>約1分・カツオ由来のエラスチン配合美容液の企画アンケート</span>
+          <strong>このサプリ、買いますか？</strong>
+          <span>約2分・久礼のカツオ由来エラスチン商品の企画アンケート</span>
         </div>
         <span class="survey-game-banner__arrow">›</span>
       </button>
@@ -2075,7 +2201,7 @@ function homePage() {
         <button data-route="reserve" type="button"><span>📅</span>2階研修室の予約</button>
         <button data-route="confirm" type="button"><span>🔎</span>予約の確認・取消</button>
         <button data-route="survey" type="button"><span>🎮</span>旅の声アンケート</button>
-        <button data-route="beauty" type="button"><span>🌿</span>美容液アンケート</button>
+        <button data-route="beauty" type="button"><span>🌿</span>商品アンケート</button>
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
         <button data-route="tower" type="button"><span>🌊</span>防災タワー紹介</button>

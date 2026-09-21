@@ -84,11 +84,9 @@ const APP_QR_SRC = 'qr-kure-katsuo-guide.svg';
 const SUBSTACK_URL = 'https://substack.com/@taishomachi';
 const SURVEY_STORAGE_KEY = 'kure-katsuo-guide-survey-responses';
 const BEAUTY_SURVEY_STORAGE_KEY = 'kure-katsuo-guide-beauty-survey-responses';
-// アンケート・車いす・会議室予約・美容液アンケート、すべて hitomikkusu の同じApps Script
-// （＝同じスプレッドシート「大正町待ち時間アンケートAPP」）へ送信し、formType で振り分けます。
-// 旧 kureomiyasan 側エンドポイント（参考・過去データはこちらのスプレッドシート「久礼大正町予約アプリ」に残っています）:
-//   https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec
-const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec';
+// アンケート・車いす・会議室予約・美容液アンケート、すべて同じApps Script
+// （＝同じスプレッドシート「久礼大正町予約アプリ」）へ送信し、formType で振り分けます。
+const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec';
 
 // Apps Script の e.postData.contents は 'text/plain' だと絵文字（サロゲートペア）を
 // 正しく復元できず文字化けするため、送信前に percent-encode する（doPost 側で decodeURIComponent）。

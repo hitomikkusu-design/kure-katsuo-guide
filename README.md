@@ -209,14 +209,9 @@ PR #3 では、既存のガイド構成や音声ガイド方針を残したま�
 - **記録先シート**: 既存の「アンケート」シートとは別に、`apps-script/Code.gs` の `CONFIG.beautySurveySheet`（既定「美容液アンケート」）という専用シートへ、設問ごとに列分けして記録されます（`logBeautySurveyRow`）。既存の旅アンケート集計とは混ざりません。
 - Apps Scriptを更新（`apps-script/Code.gs` を貼り替えて再デプロイ）するまでは、回答の送信は行われますがスプレッドシートには記録されません。
 
-## Apps Scriptの送信先を切り替え（2026年9月）
+## 記録先スプレッドシート
 
-美容液アンケート追加にあたり、送信先のApps Script／記録先スプレッドシートを切り替えました。
-
-- **旧**: kureomiyasan 側のApps Script → スプレッドシート「久礼大正町予約アプリ」（〜2026年9月18日までの旅アンケート・車いす予約の実績データはこちらに残っています）
-- **新**: hitomikkusu 側のApps Script → スプレッドシート「[大正町待ち時間アンケートAPP](https://docs.google.com/spreadsheets/d/1otnC0sYf9SHU859goMjgYhh2KwocXD_aKpt1iTkqN9E/edit)」（`src/main.js` の `SURVEY_ENDPOINT`、`apps-script/Code.gs` の `CONFIG.spreadsheetId` がこちらを指しています）
-
-以降のアンケート・車いす予約・会議室予約・美容液アンケートは、すべて新しい方のスプレッドシートに記録されます。
+アンケート・車いす予約・会議室予約・美容液アンケートは、すべて同じApps Script経由でスプレッドシート「[久礼大正町予約アプリ](https://docs.google.com/spreadsheets/d/1ORyg4tZsONqXBVCtDI2h2aEdjHZzzP2fu36ar_Tz1Ug/edit)」に記録されます（`src/main.js` の `SURVEY_ENDPOINT`、`apps-script/Code.gs` の `CONFIG.spreadsheetId` がこちらを指しています）。過去の旅アンケート・車いす予約の実績データもこちらに残っています。
 
 ## 絵文字の文字化け対策
 

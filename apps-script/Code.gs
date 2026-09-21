@@ -36,7 +36,8 @@ var CONFIG = {
 
   // 記録用スプレッドシートID。空欄なら、このスクリプトに紐づくシート（あれば）を使います。
   // 記録だけ不要なら空欄のままで構いません（予約のカレンダー登録には影響しません）。
-  spreadsheetId: '',
+  // 「大正町待ち時間アンケートAPP」（https://docs.google.com/spreadsheets/d/1otnC0sYf9SHU859goMjgYhh2KwocXD_aKpt1iTkqN9E/）を記録先に固定。
+  spreadsheetId: '1otnC0sYf9SHU859goMjgYhh2KwocXD_aKpt1iTkqN9E',
 
   // 記録先シート名（無ければ自動作成）。
   surveySheet: 'アンケート',

@@ -1,5 +1,5 @@
 const navRoutes = ['home', 'wait', 'survey', 'katsuo', 'market', 'tower', 'rental'];
-const routes = [...navRoutes, 'reserve', 'confirm'];
+const routes = [...navRoutes, 'reserve', 'confirm', 'beauty'];
 
 const routeMeta = {
   home: { label: 'ホーム', icon: '🏠', subtitle: '大正町市場で、待つ時間も旅の思い出に。' },
@@ -11,6 +11,7 @@ const routeMeta = {
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
   reserve: { label: '研修室', icon: '📅', subtitle: '2階研修室の空きを見て、その場で予約できます。' },
   confirm: { label: '予約確認', icon: '🔎', subtitle: '電話番号で予約の確認・取消ができます。' },
+  beauty: { label: '美容液アンケート', icon: '🌿', subtitle: '約1分・カツオ由来の美容液アンケートです。' },
 };
 
 
@@ -82,11 +83,15 @@ const APP_URL = 'https://hitomikkusu-design.github.io/kure-katsuo-guide/';
 const APP_QR_SRC = 'qr-kure-katsuo-guide.svg';
 const SUBSTACK_URL = 'https://substack.com/@taishomachi';
 const SURVEY_STORAGE_KEY = 'kure-katsuo-guide-survey-responses';
+const BEAUTY_SURVEY_STORAGE_KEY = 'kure-katsuo-guide-beauty-survey-responses';
 // アンケート・車いす・会議室予約、すべて kureomiyasan の同じApps Script
 // （＝同じスプレッドシート「久礼大正町予約アプリ」）へ送信し、formType で振り分けます。
 // 旧 hitomikkusu 側エンドポイント（参考・未使用）:
 //   https://script.google.com/macros/s/AKfycbziyW9dgy3m0-BsTKBm7uEHVNJLRCFsYibsBX5HfJRm7JQsJlbsBYL1FFoO-h9SHGcC/exec
 const SURVEY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzLI-UOEdOpb5L8FWrrEBALXthbA7S7v2gbhqe7DYWTf73IgIgRCZFZLunUjP_ERf78nw/exec';
+
+// 美容液アンケートも同じApps Scriptへ（formType:'beautySurvey' で振り分け、専用シートに記録）。
+const BEAUTY_SURVEY_ENDPOINT = SURVEY_ENDPOINT;
 
 // 車いす予約は同じApps Scriptに送信し、formType で振り分けます。
 const RENTAL_ENDPOINT = SURVEY_ENDPOINT;
@@ -207,6 +212,68 @@ const surveyQuestions = [
     options: ['待ち時間が知りたい', '混雑予報がほしい', 'おすすめ順路がほしい', '駐車場情報がほしい', '子連れ情報がほしい', '多言語案内がほしい', 'クーポンがほしい'],
     placeholder: '要望や困ったことなど',
     marketing: '次に作るべき機能や改善テーマの優先順位を決めやすくなります。',
+  },
+];
+
+const beautySurveyIntro = {
+  eyebrow: 'ABOUT 1 MIN',
+  title: '美容液について教えてください🌿',
+  lead: '高知のカツオ由来の成分「エラスチン」を配合した美容液を企画しています。商品づくりの参考に、率直なお気持ちを教えてください。購入をお願いするものではありません。匿名で回答できます。',
+};
+
+const beautySurveyQuestions = [
+  {
+    id: 'skinConcern',
+    shortLabel: '肌の悩み',
+    icon: '🧴',
+    prompt: '今、お肌でいちばん気になることは？',
+    note: '〈１つ選択〉',
+    options: ['乾燥', 'ハリ・弾力の不足', 'シミ・くすみ', '毛穴', 'その他', '特にない'],
+  },
+  {
+    id: 'lastPurchasePrice',
+    shortLabel: '直近購入価格',
+    icon: '💴',
+    prompt: '直近３か月で、自分用に購入した美容液１本の価格は？',
+    note: '〈複数購入した方は、最後に買ったもの〉',
+    options: ['2,000円未満', '2,000〜3,999円', '4,000〜5,999円', '6,000円以上', '購入していない'],
+  },
+  {
+    id: 'purchaseIntent',
+    shortLabel: '購入意向',
+    icon: '🧪',
+    prompt: '次の美容液が発売されたら、購入したいと思いますか？',
+    note: '【企画中の商品】カツオ由来のエラスチンを配合した、肌の保湿・ハリのお手入れ用美容液。約１か月分・税込3,980円を想定しています。※仕様・価格は未定です。',
+    options: [
+      'この価格で購入したい',
+      'お試しサイズを使い、気に入ればこの価格で購入したい',
+      '詳しい情報を見てから判断したい',
+      'この価格では購入したくない',
+      '価格に関係なく購入したくない',
+    ],
+  },
+  {
+    id: 'decisionFactor',
+    shortLabel: '判断材料',
+    icon: '🔍',
+    prompt: '購入を判断するために、いちばん確認したいことは？',
+    note: '〈１つ選択〉',
+    options: [
+      '保湿・ハリに関する試験結果',
+      '自分の肌に合うか',
+      'におい・べたつきなどの使い心地',
+      '全成分や魚由来成分のアレルギー情報',
+      '口コミ・利用者の感想',
+      'その他',
+    ],
+  },
+  {
+    id: 'budget',
+    shortLabel: '許容予算',
+    icon: '💰',
+    prompt: '約１か月分なら、いくらまで購入を検討できますか？',
+    note: '〈１つ選択〉',
+    options: ['2,000円未満', '2,000〜2,999円', '3,000〜3,999円', '4,000〜4,999円', '5,000円以上', '今の情報では判断できない', '購入は考えていない'],
   },
 ];
 
@@ -711,6 +778,109 @@ function setupSurveyInteractions() {
     window.alert('旅メモカードを作成しました。回答はこの端末に保存されています。');
   });
   renderSurveyProgress();
+}
+
+function getStoredBeautySurveyResponses() {
+  try {
+    return JSON.parse(window.localStorage.getItem(BEAUTY_SURVEY_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveBeautySurveyResponse(response) {
+  const responses = getStoredBeautySurveyResponses();
+  responses.unshift(response);
+  window.localStorage.setItem(BEAUTY_SURVEY_STORAGE_KEY, JSON.stringify(responses.slice(0, 20)));
+}
+
+function beautySurveyQuestionCard(question, index) {
+  return `
+    <fieldset class="survey-question" data-beauty-survey-question="${question.id}">
+      <legend>
+        <span class="survey-question__number">${index + 1}</span>
+        <span class="survey-question__icon" aria-hidden="true">${question.icon}</span>
+        <span>${question.prompt}</span>
+      </legend>
+      ${question.note ? `<p class="survey-marketing-note">${question.note}</p>` : ''}
+      <div class="survey-options">
+        ${question.options
+          .map(
+            (option) => `
+              <label class="survey-chip">
+                <input type="radio" name="${question.id}" value="${option}" required />
+                <span>${option}</span>
+              </label>
+            `,
+          )
+          .join('')}
+      </div>
+    </fieldset>
+  `;
+}
+
+function beautySurveyPage() {
+  return `
+    <div class="stack">
+      <section class="survey-hero">
+        <p class="hero__eyebrow">${beautySurveyIntro.eyebrow}</p>
+        <h2>${beautySurveyIntro.title}</h2>
+        <p>${beautySurveyIntro.lead}</p>
+      </section>
+
+      <form class="survey-form" id="beauty-survey-form">
+        ${beautySurveyQuestions.map(beautySurveyQuestionCard).join('')}
+
+        <button class="button button--primary survey-submit" type="submit">回答を送る</button>
+      </form>
+
+      <section class="survey-share-card" id="beauty-survey-thanks" aria-live="polite" hidden>
+        <p class="survey-share-card__eyebrow">THANK YOU</p>
+        <h3>ご協力ありがとうございます。</h3>
+        <p>いただいた声を、商品づくりに活かしていきます。</p>
+      </section>
+    </div>
+  `;
+}
+
+function collectBeautySurveyAnswer(form, question) {
+  return {
+    label: question.shortLabel,
+    value: form.elements[question.id]?.value || '',
+  };
+}
+
+function setupBeautySurveyInteractions() {
+  const form = document.querySelector('#beauty-survey-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const response = {
+      formType: 'beautySurvey',
+      id: `beauty-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      answers: beautySurveyQuestions.map((question) => collectBeautySurveyAnswer(form, question)),
+    };
+
+    saveBeautySurveyResponse(response);
+
+    if (BEAUTY_SURVEY_ENDPOINT) {
+      try {
+        await fetch(BEAUTY_SURVEY_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(response),
+        });
+      } catch {
+        // 通信できなくても、回答は端末内に保存済みなので送信完了として扱う。
+      }
+    }
+
+    document.querySelector('#beauty-survey-thanks')?.removeAttribute('hidden');
+    document.querySelector('#beauty-survey-thanks')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.alert('ご協力ありがとうございます。回答を送信しました。');
+  });
 }
 
 function getActiveRental() {
@@ -1884,6 +2054,15 @@ function homePage() {
         <span class="survey-game-banner__arrow">›</span>
       </button>
 
+      <button class="survey-game-banner beauty-banner" data-route="beauty" type="button">
+        <span class="survey-game-banner__icon">🌿</span>
+        <div class="survey-game-banner__body">
+          <strong>美容液について教えてください</strong>
+          <span>約1分・カツオ由来のエラスチン配合美容液の企画アンケート</span>
+        </div>
+        <span class="survey-game-banner__arrow">›</span>
+      </button>
+
       ${sectionTitle('WAIT TIME', '待ち時間から選ぶ', '今の待ち時間に近いカードを選んでください。')}
       <div class="wait-grid compact">${waitGuides.slice(0, 2).map(waitCard).join('')}</div>
       ${button('すべての待ち時間を見る', 'wait', 'secondary')}
@@ -1892,6 +2071,7 @@ function homePage() {
         <button data-route="reserve" type="button"><span>📅</span>2階研修室の予約</button>
         <button data-route="confirm" type="button"><span>🔎</span>予約の確認・取消</button>
         <button data-route="survey" type="button"><span>🎮</span>旅の声アンケート</button>
+        <button data-route="beauty" type="button"><span>🌿</span>美容液アンケート</button>
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
         <button data-route="tower" type="button"><span>🌊</span>防災タワー紹介</button>
@@ -1935,6 +2115,7 @@ function pageFor(route) {
   if (route === 'rental') return rentalPage();
   if (route === 'reserve') return reservePage();
   if (route === 'confirm') return confirmPage();
+  if (route === 'beauty') return beautySurveyPage();
   if (route === 'katsuo') {
     return articlePage(
       'katsuo',
@@ -2055,6 +2236,7 @@ function render() {
   });
 
   setupSurveyInteractions();
+  setupBeautySurveyInteractions();
   setupRentalInteractions();
   setupReserveInteractions();
   setupWheelchairReserve();

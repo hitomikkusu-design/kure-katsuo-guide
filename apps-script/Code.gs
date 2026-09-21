@@ -5,6 +5,7 @@
  *   - 2階会議室の予約（formType:'reservation'）→ Googleカレンダー登録（ダブルブッキング防止）
  *   - 空き状況の取得（GET ?action=reservations&date=YYYY-MM-DD）
  *   - 車いす予約（formType:'rental'）→ スプレッドシートに記録
+ *   - 美容液アンケート（formType:'beautySurvey'）→ 専用シートに記録
  *   - アンケート（formTypeなし）→ スプレッドシートに記録
  *
  * ■ 張り替え手順（既存スクリプトを丸ごと置き換える場合）
@@ -42,6 +43,7 @@ var CONFIG = {
   rentalSheet: '車いす予約',
   reservationSheet: '会議室予約',
   wheelchairSheet: '車いす事前予約',
+  beautySurveySheet: '美容液アンケート',
 };
 
 // ===== エントリーポイント ========================================
@@ -68,6 +70,10 @@ function doPost(e) {
     }
     if (data.formType === 'rental') {
       logRentalRow(data);
+      return jsonOutput({ ok: true });
+    }
+    if (data.formType === 'beautySurvey') {
+      logBeautySurveyRow(data);
       return jsonOutput({ ok: true });
     }
     // それ以外はアンケートとして記録（項目別に列分け）
@@ -403,6 +409,32 @@ function logSurveyRow(data) {
     }
     row.push(data.comment || '');
     row.push(data.shareable ? '可' : '');
+    sheet.appendRow(row);
+  } catch (e) {
+    // 記録失敗は送信本体を妨げない。
+  }
+}
+
+// 美容液アンケートを、専用シートに設問ごと列分けして記録する（1問1回答のみ）。
+// 列: 受付日時 / 各設問（単一回答）
+function logBeautySurveyRow(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return;
+    var answers = data.answers || [];
+    var sheet = ss.getSheetByName(CONFIG.beautySurveySheet);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.beautySurveySheet);
+      var header = ['受付日時'];
+      for (var h = 0; h < answers.length; h++) {
+        header.push(answers[h].label || ('設問' + (h + 1)));
+      }
+      sheet.appendRow(header);
+    }
+    var row = [new Date()];
+    for (var i = 0; i < answers.length; i++) {
+      row.push((answers[i] && answers[i].value) || '');
+    }
     sheet.appendRow(row);
   } catch (e) {
     // 記録失敗は送信本体を妨げない。

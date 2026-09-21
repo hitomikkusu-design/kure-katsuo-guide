@@ -44,7 +44,8 @@ var CONFIG = {
   rentalSheet: '車いす予約',
   reservationSheet: '会議室予約',
   wheelchairSheet: '車いす事前予約',
-  beautySurveySheet: '美容液アンケート',
+  // 設問を入れ替えたため、旧「美容液アンケート」シートはそのまま残し、新しいシートに記録する。
+  beautySurveySheet: '商品アンケート',
 };
 
 // ===== エントリーポイント ========================================
@@ -424,13 +425,16 @@ function logBeautySurveyRow(data) {
     if (!ss) return;
     var answers = data.answers || [];
     var sheet = ss.getSheetByName(CONFIG.beautySurveySheet);
+    var header = ['受付日時'];
+    for (var h = 0; h < answers.length; h++) {
+      header.push(answers[h].label || ('設問' + (h + 1)));
+    }
     if (!sheet) {
       sheet = ss.insertSheet(CONFIG.beautySurveySheet);
-      var header = ['受付日時'];
-      for (var h = 0; h < answers.length; h++) {
-        header.push(answers[h].label || ('設問' + (h + 1)));
-      }
       sheet.appendRow(header);
+    } else if (sheet.getLastRow() === 0 || sheet.getLastColumn() < header.length) {
+      // 設問を増やしたときに、見出し行も自動で広げる。
+      sheet.getRange(1, 1, 1, header.length).setValues([header]);
     }
     var row = [new Date()];
     for (var i = 0; i < answers.length; i++) {

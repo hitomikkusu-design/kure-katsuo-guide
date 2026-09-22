@@ -11,7 +11,7 @@ const routeMeta = {
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
   reserve: { label: '研修室', icon: '📅', subtitle: '2階研修室の空きを見て、その場で予約できます。' },
   confirm: { label: '予約確認', icon: '🔎', subtitle: '電話番号で予約の確認・取消ができます。' },
-  beauty: { label: '商品アンケート', icon: '🌿', subtitle: '約2分・久礼のチチコ由来エラスチン商品の企画アンケートです。' },
+  beauty: { label: '商品アンケート', icon: '🌿', subtitle: '約3分・久礼のチチコ由来エラスチン商品の企画アンケートです。' },
 };
 
 
@@ -235,18 +235,26 @@ const surveyQuestions = [
 
 const beautySurveyIntro = {
   eyebrow: 'ABOUT 3 MIN',
-  title: '鰹の「チチコ」が、商品に？🐟',
-  lead: 'この街の鰹の心臓「チチコ」から採れる成分「エラスチン」を使った商品を企画しています。「飲むサプリメント」と「塗る美容液」の両方を検討中です。「買わない」というお答えがいちばん参考になりますので、率直にお聞かせください。販売や勧誘は一切ありません。匿名で回答できます。',
+  title: '鰹の「チチコ」由来のエラスチン、商品化できるか教えてください🐟',
+  paragraphs: [
+    'エラスチンは、体の「しなやかさ」をつくるタンパク質です。',
+    '血管、心臓、肺、靭帯、皮膚——押しても引いても元に戻る組織には、必ずエラスチンが入っています。ゴムのような弾力を支えている線維です。',
+    'エラスチンは20代をピークに体内でほとんど作られなくなります。コラーゲンと違い、一度失われると入れ替わりにくいことが知られています。',
+    'この分野の研究は、日本の水産メーカーが積み重ねてきました。カツオ由来のエラスチンペプチドについては、ヒト試験で血管弾力と血管内皮機能への作用が報告され（機能性食品と薬理栄養 11, 97-108, 2017）、「血管のしなやかさの維持」「膝関節の動きのサポート」「肌の弾力の維持」の3つで機能性表示食品としての受理実績があります。複数の特許も取得されています。',
+    'そして、その研究で使われてきたのが「魚の動脈球」——心臓から大動脈につながる、ゴムのように弾力のある部位です。',
+    '高知・久礼では、この部位を「チチコ」と呼び、長らく漁師の家庭で煮付けにするか、捨ててきました。',
+    '捨てられてきた部位に、これだけの研究の蓄積がある。それを久礼から商品にできないか——その可能性を確かめるために、みなさまのお考えをお聞かせください。（3分ほどで終わります）',
+  ],
 };
 
 const beautySurveyQuestions = [
   {
-    id: 'residence',
-    shortLabel: 'お住まいの地域',
-    icon: '📍',
-    prompt: 'だいたい、どこの都道府県にお住まいですか？',
-    note: '〈１つ選択・わかる範囲でOK〉',
-    options: ['高知県', '四国（高知県外）', '関西', '中国地方', '九州', '中部・北陸', '関東', '東北・北海道', '海外', '回答しない'],
+    id: 'ageGroup',
+    shortLabel: '年代',
+    icon: '🎂',
+    prompt: '年代を教えてください。',
+    note: '〈１つ選択〉',
+    options: ['20代', '30代', '40代', '50代', '60代', '70代以上'],
   },
   {
     id: 'gender',
@@ -254,202 +262,137 @@ const beautySurveyQuestions = [
     icon: '🚻',
     prompt: '性別を教えてください。',
     note: '〈１つ選択〉',
-    options: ['女性', '男性', 'その他', '回答しない'],
+    options: ['男性', '女性', '回答しない'],
   },
   {
-    id: 'ageGroup',
-    shortLabel: '年代',
-    icon: '🎂',
-    prompt: '年代を教えてください。',
-    note: '〈１つ選択〉',
-    options: ['10代以下', '20代', '30代', '40代', '50代', '60代以上', '回答しない'],
-  },
-  {
-    id: 'interest',
-    shortLabel: '興味度',
-    icon: '💭',
-    prompt: 'そもそも、カツオ由来の健康・美容成分を使った商品に興味はありますか？',
-    note: '〈１つ選択〉価格や商品の話をする前に、率直な興味度を教えてください。',
-    options: ['とても興味がある', '少し興味がある', 'あまり興味はない', '全く興味がない'],
-  },
-  {
-    id: 'giftPurpose',
-    shortLabel: '贈答用か自分用か',
-    icon: '🎁',
-    prompt: '自分用ですか、それとも贈り物ですか？',
-    note: '〈１つ選択〉',
-    options: ['自分用', '家族や友人への贈り物', '両方'],
-  },
-  {
-    id: 'currentBrand',
-    shortLabel: '現在使用中のブランド・価格帯',
-    icon: '🏷️',
-    prompt: '今お使いの美容液・サプリのブランド名と価格帯があれば教えてください。',
-    type: 'text',
-    optional: true,
-    note: '〈自由記入・任意〉わかる範囲でOKです。',
-    placeholder: '例：〇〇（ブランド名）・月3,000円くらい',
-  },
-  {
-    id: 'chichikoAwareness',
-    shortLabel: 'チチコ由来と知った時の興味変化',
-    icon: '🔎',
-    prompt: '高知・久礼のカツオ由来の素材だと知ると、興味は変わりますか？',
-    note: '〈１つ選択〉',
-    options: ['とても上がる', '少し上がる', '変わらない', '下がる'],
-  },
-  {
-    id: 'purpose',
-    shortLabel: '欲しい効果・用途',
-    icon: '🎯',
-    prompt: 'どんな目的・効果があれば、お金を出してもよいと思いますか？',
+    id: 'elasticityConcerns',
+    shortLabel: '体のしなやかさで気になること',
+    icon: '🧘',
+    prompt: '体の「しなやかさ」で気になることはありますか？',
     type: 'multi',
     optional: true,
-    other: true,
-    note: '〈いくつでも・任意〉先に「どんなものなら欲しいか」を教えてください。',
+    note: '〈いくつでも〉',
     options: [
-      '肌の弾力・ハリ',
-      'シミ・くすみ対策',
-      '若返り・エイジングケア全般',
-      'ひざの軟骨・関節のなめらかさ',
-      '血管の強化・しなやかさ',
-      '髪や爪の健康',
-      '疲れにくさ',
-      '眠りの質',
-      '家族や自分へのお土産・贈り物',
-      '目的がはっきりしていれば何でも',
-      '欲しい商品は特にない',
+      '体が硬くなった、可動域が狭くなった',
+      '階段や坂で息が上がるようになった',
+      'ひざ・腰など関節のひっかかり',
+      '健康診断の数値が気になり始めた',
+      '疲れが抜けにくい',
+      '見た目の年齢（肌のたるみ・ほうれい線）',
+      '特にない',
     ],
   },
   {
-    id: 'supplementHabit',
-    shortLabel: 'サプリ習慣',
-    icon: '💊',
-    prompt: 'サプリメントを飲む習慣はありますか？',
+    id: 'priorKnowledge',
+    shortLabel: 'エラスチンの認知',
+    icon: '📖',
+    prompt: 'この説明を読む前、エラスチンについてご存じでしたか？',
     note: '〈１つ選択〉',
-    options: ['毎日飲んでいる', 'ときどき飲む', '以前は飲んでいた', '飲んだことはない'],
+    options: ['血管や体の弾力に関わる成分だと知っていた', '名前は聞いたことがあった（肌の成分として）', '初めて知った'],
   },
   {
-    id: 'purchaseIntent',
-    shortLabel: '購入意向（5,980円）',
-    icon: '🐟',
-    prompt: 'この商品が発売されたら、購入したいと思いますか？',
-    note:
-      '【企画中の商品】久礼のカツオの心臓「チチコ」から採れるエラスチンを配合した商品。「飲むサプリメント（１日１粒・約１か月分）」と「塗る美容液（約１か月分）」の両方を検討中で、税込5,980円を想定しています。※仕様・価格は未定です。',
+    id: 'trustFactors',
+    shortLabel: '信頼できると感じた点',
+    icon: '🔍',
+    prompt: '次のうち、「信頼できる」と感じたものはどれですか？',
+    type: 'multi',
+    optional: true,
+    note: '〈いくつでも〉',
     options: [
-      'この価格で購入したい',
-      'お試しサイズがあれば購入したい',
-      'もう少し安ければ購入したい',
-      '詳しい情報を見てから判断したい',
-      'この価格では購入しない',
-      '価格に関係なく購入しない',
+      'ヒト試験の論文が公開されていること',
+      '機能性表示食品としての受理実績があること',
+      '特許が取得されていること',
+      '研究に使われてきた部位そのものを地元で扱っていること',
+      '捨てられていた部位を活かすという考え方',
+      'どれも特に感じない',
     ],
+  },
+  {
+    id: 'interestShift',
+    shortLabel: '説明を読んだ後の関心の変化',
+    icon: '📈',
+    prompt: '説明を読んで、この素材への関心はどう変わりましたか？',
+    note: '〈１つ選択〉',
+    options: ['とても上がった', '少し上がった', '変わらない', '下がった'],
+  },
+  {
+    id: 'purchaseIntentFunctional',
+    shortLabel: '機能性表示商品への購入意向',
+    icon: '🩺',
+    prompt: 'もし「血管のしなやかさの維持に役立つ」と機能性表示された商品があったら？',
+    note: '〈１つ選択〉',
+    options: ['ぜひ試したい', '価格しだいで試したい', '内容をもっと知ってから決めたい', '関心はない'],
+  },
+  {
+    id: 'healthHabits',
+    shortLabel: '健康のために続けていること',
+    icon: '🏃',
+    prompt: '健康のために現在つづけていることはありますか？',
+    type: 'multi',
+    optional: true,
+    note: '〈いくつでも〉',
+    options: ['サプリメント', '運動（週1回以上）', '食事の管理', '定期的な健康診断・人間ドック', '特にしていない'],
+  },
+  {
+    id: 'preferredForm',
+    shortLabel: '続けやすい形',
+    icon: '🥄',
+    prompt: '続けやすい形はどれですか？',
+    note: '〈１つ選択〉',
+    options: ['小さな粒・カプセル', '口の中で溶けるフィルム（水がいらない）', 'ドリンク', '普段の食事に混ぜる粉末', 'こだわらない'],
+  },
+  {
+    id: 'monthlyBudget',
+    shortLabel: '許容予算（月）',
+    icon: '💰',
+    prompt: '1か月分（30日）でいくらまでなら続けられますか？',
+    note: '〈１つ選択〉',
+    options: ['1,980円以下', '2,000〜2,980円', '3,000〜3,980円', '4,000〜5,980円', '6,000円以上でも納得できれば', '買うつもりはない'],
   },
   {
     id: 'trialSizeBudget',
     shortLabel: 'お試しサイズ許容価格',
     icon: '🧪',
-    prompt: 'お試しサイズ（2週間分）なら、いくらまで出せますか？',
+    prompt: '2週間分のお試しサイズなら、いくらまで出せますか？',
     note: '〈１つ選択〉',
     options: ['980円', '1,480円', '1,980円', '2,980円', '買わない'],
   },
   {
-    id: 'alternative',
-    shortLabel: '買うとしたら何なら',
-    icon: '🔁',
-    prompt: 'この商品を買わないとしたら、どんな商品でなら買いたいですか？',
-    type: 'multi',
-    optional: true,
-    other: true,
-    note: '〈いくつでも・任意〉買わない理由の裏返しを教えてください。',
-    options: [
-      'もっと価格が安ければ',
-      '１週間などのお試しサイズがあれば',
-      '機能性表示食品（国への届出）であれば',
-      '効果の試験データが示されていれば',
-      '医師や専門家がすすめていれば',
-      '飲みやすい形（粒が小さいなど）なら',
-      'サプリより、食べもの（缶詰・出汁・ふりかけなど）なら',
-      '定期購入で割安になるなら',
-      '贈り物にできる見た目なら',
-      'どんな商品でも購入しない',
-    ],
-  },
-  {
-    id: 'productType',
-    shortLabel: 'サプリか美容液か',
-    icon: '⚖️',
-    prompt: '同じ成分なら、飲むサプリと塗る美容液、どちらが欲しいですか？',
-    note: '〈１つ選択・任意〉',
-    optional: true,
-    options: ['飲むサプリ', '塗る美容液', '両方ほしい', 'どちらも欲しくない', '決められない'],
-  },
-  {
-    id: 'form',
-    shortLabel: '続けやすい形',
-    icon: '🥄',
-    prompt: '続けるとしたら、どの形がよいですか？',
-    note: '〈１つ選択・任意〉',
-    optional: true,
-    options: ['小さな粒・カプセル', '粉末（スティック）', 'ドリンク', 'ゼリー', '口の中で溶けるフィルム', 'ふだんの食事に混ぜられるもの', 'こだわらない'],
-  },
-  {
-    id: 'budget',
-    shortLabel: '許容予算（月）',
-    icon: '💰',
-    prompt: '約１か月分なら、いくらまで出せますか？',
-    note: '〈１つ選択〉',
-    options: [
-      '1,999円以下',
-      '2,000〜2,999円',
-      '3,000〜3,999円',
-      '4,000〜4,999円',
-      '5,000〜7,999円',
-      '8,000円以上',
-      '今の情報では判断できない',
-      '買うつもりはない',
-    ],
-  },
-  {
-    id: 'channel',
+    id: 'purchaseChannel',
     shortLabel: '買いたい場所',
     icon: '🛒',
-    prompt: 'もし買うとしたら、どこで買いたいですか？',
+    prompt: '買うとしたらどこで買いたいですか？',
     type: 'multi',
     optional: true,
-    note: '〈いくつでも・任意〉',
-    options: [
-      'Amazon・楽天など通販サイト',
-      '公式サイトの定期便',
-      'ドラッグストア・薬局',
-      '久礼大正町市場の店頭',
-      '道の駅・市場などの店頭',
-      '百貨店やギフト売り場',
-      'テレビ通販',
-      'SNSの投稿や広告から',
-      '買うつもりはない',
-    ],
+    note: '〈いくつでも〉',
+    options: ['Amazon・楽天などの通販', '公式サイトの定期便', 'ドラッグストア・薬局', '久礼大正町市場・道の駅などの店頭', '百貨店・ギフト売り場'],
   },
   {
-    id: 'hesitation',
-    shortLabel: 'ためらう理由',
-    icon: '🚧',
-    prompt: '買うのをためらうとしたら、理由はどれですか？',
-    type: 'multi',
+    id: 'giftPurpose',
+    shortLabel: '贈答用か自分用か',
+    icon: '🎁',
+    prompt: '自分用ですか、贈り物ですか？',
+    note: '〈１つ選択〉',
+    options: ['自分用', '家族や知人への贈り物', '両方'],
+  },
+  {
+    id: 'wasteMaterialSupport',
+    shortLabel: '未利用部位を使うことについて',
+    icon: '🐟',
+    prompt: '「捨てられていたカツオの部位を使う」という点について、どう感じますか？',
+    note: '〈１つ選択〉',
+    options: ['応援したい。それが理由で買うこともある', '好感は持つが、買う理由にはならない', '特に関心はない'],
+  },
+  {
+    id: 'freeComment',
+    shortLabel: '自由記入',
+    icon: '✍️',
+    prompt: 'そのほか、ご自由にお書きください。',
+    type: 'text',
+    multiline: true,
     optional: true,
-    other: true,
-    note: '〈いくつでも・任意〉',
-    options: [
-      '価格が高い',
-      '効果がわからない',
-      'カツオ（魚）由来が気になる',
-      '魚アレルギーが心配',
-      'においや味が心配',
-      '飲み続ける自信がない',
-      'すでに使っているものがある',
-      '知らないブランドだから',
-      'ためらう理由はない',
-    ],
+    note: '〈自由記入・任意〉',
+    placeholder: 'ご意見・ご感想など、思いついたことをそのまま書いてください',
   },
 ];
 
@@ -970,6 +913,9 @@ function saveBeautySurveyResponse(response) {
 
 function beautySurveyQuestionCard(question, index) {
   if (question.type === 'text') {
+    const field = question.multiline
+      ? `<textarea name="${question.id}" rows="3" maxlength="600" placeholder="${question.placeholder || ''}" ${question.optional ? '' : 'required'}></textarea>`
+      : `<input type="text" name="${question.id}" maxlength="120" placeholder="${question.placeholder || ''}" ${question.optional ? '' : 'required'} />`;
     return `
       <fieldset class="survey-question" data-beauty-survey-question="${question.id}">
         <legend>
@@ -978,9 +924,9 @@ function beautySurveyQuestionCard(question, index) {
           <span>${question.prompt}</span>
         </legend>
         ${question.note ? `<p class="survey-marketing-note">${question.note}</p>` : ''}
-        <label class="survey-free-text">
+        <label class="survey-free-text${question.multiline ? ' survey-free-text--textarea' : ''}">
           <span>回答</span>
-          <input type="text" name="${question.id}" maxlength="120" placeholder="${question.placeholder || ''}" ${question.optional ? '' : 'required'} />
+          ${field}
         </label>
       </fieldset>
     `;
@@ -1021,39 +967,21 @@ function beautySurveyQuestionCard(question, index) {
   `;
 }
 
-// 年代（ageGroup）までは全員に聞き、それ以降は未成年の場合に非表示にする。
-const BEAUTY_SURVEY_AGE_SPLIT = 3;
-
 function beautySurveyPage() {
   const submissionId = generateUUID();
-  const preAgeQuestions = beautySurveyQuestions.slice(0, BEAUTY_SURVEY_AGE_SPLIT);
-  const postAgeQuestions = beautySurveyQuestions.slice(BEAUTY_SURVEY_AGE_SPLIT);
 
   return `
     <div class="stack">
       <section class="survey-hero">
         <p class="hero__eyebrow">${beautySurveyIntro.eyebrow}</p>
         <h2>${beautySurveyIntro.title}</h2>
-        <p>${beautySurveyIntro.lead}</p>
+        ${beautySurveyIntro.paragraphs.map((p) => `<p>${p}</p>`).join('')}
       </section>
 
       <form class="survey-form" id="beauty-survey-form">
         <input type="hidden" name="submissionId" value="${submissionId}" />
 
-        ${preAgeQuestions.map(beautySurveyQuestionCard).join('')}
-
-        <p class="survey-marketing-note" id="beauty-survey-minor-notice" hidden>
-          18歳未満の方への設問はここまでです。ご協力ありがとうございました！このまま送信ボタンを押してください。
-        </p>
-
-        <div id="beauty-survey-post-age">
-          ${postAgeQuestions.map((q) => beautySurveyQuestionCard(q, beautySurveyQuestions.indexOf(q))).join('')}
-
-          <label class="survey-free-text survey-free-text--textarea">
-            <span>「こんな商品なら買う」というご意見があれば、ぜひ教えてください（任意）</span>
-            <textarea name="freeComment" rows="3" placeholder="価格・使い方・見た目など、思いついたことをそのまま書いてください"></textarea>
-          </label>
-        </div>
+        ${beautySurveyQuestions.map(beautySurveyQuestionCard).join('')}
 
         <button class="button button--primary survey-submit" type="submit">回答を送る</button>
       </form>
@@ -1066,17 +994,21 @@ function beautySurveyPage() {
 
       <section class="survey-hero" id="beauty-monitor-step" aria-live="polite" hidden>
         <p class="hero__eyebrow">最後に1つだけ</p>
-        <h2>発売前のモニター・先行案内を受け取りますか？</h2>
-        <p>試作品のモニターや先行販売のご案内を、メールでお届けします。</p>
+        <h2>発売前のモニター・先行案内をお送りしてもよろしいですか。</h2>
+        <p>試作品のモニターは、無償でお送りします。</p>
         <form id="beauty-monitor-form">
           <label class="survey-free-text">
-            <span>メールアドレス</span>
-            <input type="email" name="monitorEmail" placeholder="example@example.com" required />
+            <span>お名前（任意）</span>
+            <input type="text" name="monitorName" maxlength="60" placeholder="例：山田 太郎" />
+          </label>
+          <label class="survey-free-text">
+            <span>メールアドレス（任意）</span>
+            <input type="email" name="monitorEmail" placeholder="example@example.com" />
           </label>
           <div class="hero__actions">
-            <button class="button button--primary" type="submit">受け取る</button>
-            <button class="button button--ghost" type="button" id="beauty-monitor-skip">今回はやめておく</button>
+            <button class="button button--primary" type="submit">送る</button>
           </div>
+          <button class="beauty-monitor-skip" type="button" id="beauty-monitor-skip">今回はやめておく</button>
         </form>
       </section>
 
@@ -1104,27 +1036,6 @@ function collectBeautySurveyAnswer(form, question) {
   if (other) value = value ? `${value} / ${other}` : other;
 
   return { label: question.shortLabel, value };
-}
-
-function updateBeautySurveyMinorBranch(form) {
-  const postAge = document.querySelector('#beauty-survey-post-age');
-  const notice = document.querySelector('#beauty-survey-minor-notice');
-  if (!postAge || !notice) return;
-
-  const isMinor = form.elements.ageGroup?.value === '10代以下';
-
-  postAge.hidden = isMinor;
-  notice.hidden = !isMinor;
-
-  postAge.querySelectorAll('input, textarea, select').forEach((el) => {
-    if (isMinor) {
-      if (el.required) el.dataset.wasRequired = 'true';
-      el.required = false;
-    } else if (el.dataset.wasRequired) {
-      el.required = true;
-      delete el.dataset.wasRequired;
-    }
-  });
 }
 
 function showBeautySurveyThanks() {
@@ -1163,6 +1074,7 @@ function setupBeautyMonitorForm(mainSubmissionId) {
       submissionId: generateUUID(),
       relatedSubmissionId: mainSubmissionId,
       createdAt: new Date().toISOString(),
+      name: form.elements.monitorName?.value.trim() || '',
       email: form.elements.monitorEmail?.value.trim() || '',
     };
 
@@ -1189,10 +1101,6 @@ function setupBeautySurveyInteractions() {
   const submissionId = form.elements.submissionId?.value || generateUUID();
   let isSubmitting = false;
 
-  document.querySelectorAll('input[name="ageGroup"]').forEach((input) => {
-    input.addEventListener('change', () => updateBeautySurveyMinorBranch(form));
-  });
-
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (isSubmitting) return;
@@ -1209,10 +1117,7 @@ function setupBeautySurveyInteractions() {
       submissionId,
       id: `beauty-${Date.now()}`,
       createdAt: new Date().toISOString(),
-      answers: [
-        ...beautySurveyQuestions.map((question) => collectBeautySurveyAnswer(form, question)),
-        { label: '自由記入', value: form.elements.freeComment?.value.trim() || '' },
-      ],
+      answers: beautySurveyQuestions.map((question) => collectBeautySurveyAnswer(form, question)),
     };
 
     saveBeautySurveyResponse(response);
@@ -2385,7 +2290,7 @@ function homePage() {
         <span class="survey-game-banner__icon">🌿</span>
         <div class="survey-game-banner__body">
           <strong>鰹の「チチコ」が、商品に？</strong>
-          <span>約2分・久礼のチチコ由来エラスチン（サプリ・美容液）の企画アンケート</span>
+          <span>約3分・久礼のチチコ由来エラスチンの企画アンケート</span>
         </div>
         <span class="survey-game-banner__arrow">›</span>
       </button>

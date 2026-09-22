@@ -764,6 +764,7 @@ function surveyQuestionCard(question, index) {
 
 function surveyPage() {
   const savedCount = getStoredSurveyResponses().length;
+  const submissionId = generateUUID();
 
   return `
     <div class="stack">
@@ -779,6 +780,7 @@ function surveyPage() {
       </section>
 
       <form class="survey-form" id="survey-form">
+        <input type="hidden" name="submissionId" value="${submissionId}" />
         <div class="survey-progress" aria-live="polite">
           <div>
             <span class="survey-progress__label">達成度</span>
@@ -873,11 +875,23 @@ function setupSurveyInteractions() {
   const form = document.querySelector('#survey-form');
   if (!form) return;
 
+  let isSubmitting = false;
+
   form.addEventListener('input', renderSurveyProgress);
   form.addEventListener('change', renderSurveyProgress);
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const submitButton = form.querySelector('.survey-submit');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = '送信中…';
+    }
+
     const response = {
+      submissionId: form.elements.submissionId?.value || generateUUID(),
       id: `survey-${Date.now()}`,
       createdAt: new Date().toISOString(),
       answers: surveyQuestions.map((question) => collectSurveyAnswer(form, question)),
@@ -889,9 +903,16 @@ function setupSurveyInteractions() {
     renderSurveyShareCard(response);
 
     if (SURVEY_ENDPOINT) {
-      await postJsonToAppsScript(SURVEY_ENDPOINT, response);
+      try {
+        await postJsonToAppsScript(SURVEY_ENDPOINT, response);
+      } catch {
+        // 通信できなくても、回答は端末内に保存済みなので送信完了として扱う。
+      }
     }
 
+    if (submitButton) {
+      submitButton.textContent = '送信済み';
+    }
     window.alert('旅メモカードを作成しました。回答はこの端末に保存されています。');
   });
   renderSurveyProgress();

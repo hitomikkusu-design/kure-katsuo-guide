@@ -18,12 +18,12 @@ const routeMeta = {
 const audioGuides = {
   home: {
     id: 'audio-home-intro',
-    title: '久礼の待ち時間ガイド 音声版',
-    duration: '約1分',
-    description: 'アプリの使い方と、待ち時間を楽しむコツを音声で案内する想定です。',
-    status: '準備中',
+    title: '月音香トークラジオ 第1回 ゲスト：西村雄正さん',
+    duration: 'トークラジオ',
+    description: '月音香トークラジオの第1回。ゲストに西村雄正さんをお迎えしてお届けします。',
+    status: '公開中',
     sources: {
-      mp3: '',
+      mp3: 'https://files.yumenotane.jp/podcast/8-1-2_tsukineka_20260722.mp3',
       spotify: '',
       substack: '',
     },
@@ -737,7 +737,7 @@ function audioGuideCard(route, placement = 'page') {
       <div class="audio-guide__header">
         <span class="audio-guide__icon" aria-hidden="true">▶︎</span>
         <div>
-          <p class="audio-guide__eyebrow">将来の重要機能：音声ガイド</p>
+          <p class="audio-guide__eyebrow">${playable ? '音声ガイド' : '将来の重要機能：音声ガイド'}</p>
           <h3 id="${guide.id}-title">${guide.title}</h3>
         </div>
       </div>
@@ -746,9 +746,10 @@ function audioGuideCard(route, placement = 'page') {
         <span>${guide.duration}</span>
         <span>${guide.status}</span>
       </div>
-      <button class="audio-play-button" data-audio-id="${guide.id}" ${playable ? '' : 'aria-disabled="true"'} type="button">
-        ${playable ? '音声を再生する' : '音声準備中（再生ボタン枠）'}
-      </button>
+      ${
+        playable
+          ? ''
+          : `<button class="audio-play-button" data-audio-id="${guide.id}" aria-disabled="true" type="button">音声準備中（再生ボタン枠）</button>
       <details class="audio-guide__details">
         <summary>埋め込み対応の設計を見る</summary>
         <ul>
@@ -756,7 +757,8 @@ function audioGuideCard(route, placement = 'page') {
           <li>Spotify: <code>sources.spotify</code> に埋め込みURLを設定</li>
           <li>Substack: <code>sources.substack</code> に音声投稿の埋め込みURLを設定</li>
         </ul>
-      </details>
+      </details>`
+      }
       ${audioEmbed(guide)}
     </section>
   `;

@@ -11,7 +11,7 @@ const routeMeta = {
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
   reserve: { label: '研修室', icon: '📅', subtitle: '2階研修室の空きを見て、その場で予約できます。' },
   confirm: { label: '予約確認', icon: '🔎', subtitle: '電話番号で予約の確認・取消ができます。' },
-  beauty: { label: '美容液アンケート', icon: '🌿', subtitle: '約1分・久礼のチチコ美容液の企画アンケートです。' },
+  beauty: { label: '商品アンケート', icon: '🌿', subtitle: '約2分・カツオ由来エラスチンの商品企画アンケートです。' },
 };
 
 
@@ -224,9 +224,9 @@ const surveyQuestions = [
 ];
 
 const beautySurveyIntro = {
-  eyebrow: 'ABOUT 1 MIN',
-  title: '鰹の「チチコ」が、美容液に？🐟',
-  lead: 'この街の鰹の心臓「チチコ」から採れる成分「エラスチン」を使った美容液を開発中です。「使ってみたい」も「買わない」も、率直にお聞かせください。販売や勧誘は一切ありません。匿名で回答できます。',
+  eyebrow: 'ABOUT 2 MIN',
+  title: 'このサプリ、買いますか？🐟',
+  lead: '高知・久礼のカツオから採れる成分「エラスチン」を使った商品を企画しています。第一号はサプリメントを予定しています。「買わない」というお答えがいちばん参考になりますので、率直にお聞かせください。販売や勧誘は一切ありません。匿名で回答できます。',
 };
 
 const beautySurveyQuestions = [
@@ -255,12 +255,12 @@ const beautySurveyQuestions = [
     options: ['10代以下', '20代', '30代', '40代', '50代', '60代以上', '回答しない'],
   },
   {
-    id: 'skincareHabit',
-    shortLabel: '美容液習慣',
-    icon: '🧴',
-    prompt: '美容液を使う習慣はありますか？',
+    id: 'supplementHabit',
+    shortLabel: 'サプリ習慣',
+    icon: '💊',
+    prompt: 'サプリメントを飲む習慣はありますか？',
     note: '〈１つ選択〉',
-    options: ['毎日使っている', 'ときどき使う', '以前は使っていた', '使ったことはない'],
+    options: ['毎日飲んでいる', 'ときどき飲む', '以前は飲んでいた', '飲んだことはない'],
   },
   {
     id: 'purchaseIntent',
@@ -268,21 +268,21 @@ const beautySurveyQuestions = [
     icon: '🐟',
     prompt: 'この商品が発売されたら、購入したいと思いますか？',
     note:
-      '【企画中の商品】久礼のカツオの心臓「チチコ」から採れるエラスチンを配合した美容液。約１か月分・税込3,980円を想定しています。※仕様・価格は未定です。',
+      '【企画中の商品】高知・久礼のカツオ由来エラスチンを配合したサプリメント。１日１粒（エラスチン100mg）・約１か月分で税込3,980円を想定しています。※仕様・価格は未定です。',
     options: [
       'この価格で購入したい',
       'お試しサイズがあれば購入したい',
       'もう少し安ければ購入したい',
       '詳しい情報を見てから判断したい',
       'この価格では購入しない',
-      '価格に関係なく購入しない',
+      '価格に関係なくサプリは購入しない',
     ],
   },
   {
     id: 'alternative',
     shortLabel: '買うとしたら何なら',
     icon: '🔁',
-    prompt: 'この美容液を買わないとしたら、どんな商品でなら買いたいですか？',
+    prompt: 'このサプリを買わないとしたら、どんな商品でなら買いたいですか？',
     type: 'multi',
     optional: true,
     other: true,
@@ -293,7 +293,9 @@ const beautySurveyQuestions = [
       '機能性表示食品（国への届出）であれば',
       '効果の試験データが示されていれば',
       '医師や専門家がすすめていれば',
-      '使い心地が良ければ（べたつかない・香りが良いなど）',
+      '飲みやすい形（粒が小さいなど）なら',
+      'サプリより、塗る美容液なら',
+      'サプリより、食べもの（缶詰・出汁・ふりかけなど）なら',
       '定期購入で割安になるなら',
       '贈り物にできる見た目なら',
       'どんな商品でも購入しない',
@@ -303,7 +305,7 @@ const beautySurveyQuestions = [
     id: 'purpose',
     shortLabel: '買いたい用途',
     icon: '🎯',
-    prompt: 'どんな目的の美容液なら、お金を出してもよいと思いますか？',
+    prompt: 'どんな目的の商品なら、お金を出してもよいと思いますか？',
     type: 'multi',
     optional: true,
     other: true,
@@ -311,21 +313,33 @@ const beautySurveyQuestions = [
     options: [
       '肌のうるおい・ハリ',
       'シミ・くすみ対策',
-      '毛穴・キメ対策',
-      'エイジングケア全般',
+      'ひざ・関節のなめらかさ',
+      '髪や爪の健康',
+      '疲れにくさ',
+      '眠りの質',
+      '血管のしなやかさ',
       '家族や自分へのお土産・贈り物',
       '目的がはっきりしていれば何でも',
       '買うつもりはない',
     ],
   },
   {
-    id: 'form',
-    shortLabel: '好みのテクスチャー',
-    icon: '🥄',
-    prompt: '続けるとしたら、どんなテクスチャーがよいですか？',
+    id: 'productType',
+    shortLabel: 'サプリか美容液か',
+    icon: '⚖️',
+    prompt: '同じ成分なら、飲むサプリと塗る美容液、どちらが欲しいですか？',
     note: '〈１つ選択・任意〉',
     optional: true,
-    options: ['さらっとした美容液（ジェル状）', 'しっとりしたクリーム状', 'オイル状', 'シートマスクタイプ', 'こだわらない'],
+    options: ['飲むサプリ', '塗る美容液', '両方ほしい', 'どちらも欲しくない', '決められない'],
+  },
+  {
+    id: 'form',
+    shortLabel: '続けやすい形',
+    icon: '🥄',
+    prompt: '続けるとしたら、どの形がよいですか？',
+    note: '〈１つ選択・任意〉',
+    optional: true,
+    options: ['小さな粒・カプセル', '粉末（スティック）', 'ドリンク', 'ゼリー', '口の中で溶けるフィルム', 'ふだんの食事に混ぜられるもの', 'こだわらない'],
   },
   {
     id: 'budget',
@@ -377,8 +391,8 @@ const beautySurveyQuestions = [
       '効果がわからない',
       'カツオ（魚）由来が気になる',
       '魚アレルギーが心配',
-      'においが心配',
-      '塗り続ける自信がない',
+      'においや味が心配',
+      '飲み続ける自信がない',
       'すでに使っているものがある',
       '知らないブランドだから',
       'ためらう理由はない',
@@ -2173,8 +2187,8 @@ function homePage() {
       <button class="survey-game-banner beauty-banner" data-route="beauty" type="button">
         <span class="survey-game-banner__icon">🌿</span>
         <div class="survey-game-banner__body">
-          <strong>鰹の「チチコ」が、美容液に？</strong>
-          <span>約1分・久礼のチチコから生まれる美容液の企画アンケート</span>
+          <strong>このサプリ、買いますか？</strong>
+          <span>約2分・久礼のカツオ由来エラスチン商品の企画アンケート</span>
         </div>
         <span class="survey-game-banner__arrow">›</span>
       </button>
@@ -2187,7 +2201,7 @@ function homePage() {
         <button data-route="reserve" type="button"><span>📅</span>2階研修室の予約</button>
         <button data-route="confirm" type="button"><span>🔎</span>予約の確認・取消</button>
         <button data-route="survey" type="button"><span>🎮</span>旅の声アンケート</button>
-        <button data-route="beauty" type="button"><span>🌿</span>美容液アンケート</button>
+        <button data-route="beauty" type="button"><span>🌿</span>商品アンケート</button>
         <button data-route="katsuo" type="button"><span>🐟</span>カツオ豆知識</button>
         <button data-route="market" type="button"><span>🏮</span>大正町市場紹介</button>
         <button data-route="tower" type="button"><span>🌊</span>防災タワー紹介</button>

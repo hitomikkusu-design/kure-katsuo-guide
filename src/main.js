@@ -11,7 +11,7 @@ const routeMeta = {
   rental: { label: '車いす', icon: '♿', subtitle: '車いすの貸し出し予約と返却タイマー。' },
   reserve: { label: '研修室', icon: '📅', subtitle: '2階研修室の空きを見て、その場で予約できます。' },
   confirm: { label: '予約確認', icon: '🔎', subtitle: '電話番号で予約の確認・取消ができます。' },
-  beauty: { label: '商品アンケート', icon: '🌿', subtitle: '約2分・カツオ由来エラスチンの商品企画アンケートです。' },
+  beauty: { label: '商品アンケート', icon: '🌿', subtitle: '約2分・久礼のチチコ由来エラスチン商品の企画アンケートです。' },
 };
 
 
@@ -225,8 +225,8 @@ const surveyQuestions = [
 
 const beautySurveyIntro = {
   eyebrow: 'ABOUT 2 MIN',
-  title: 'この商品、買いますか？🐟',
-  lead: '高知・久礼のカツオから採れる成分「エラスチン」を使った商品を企画しています。「飲むサプリメント」と「塗る美容液」の両方を検討中です。「買わない」というお答えがいちばん参考になりますので、率直にお聞かせください。販売や勧誘は一切ありません。匿名で回答できます。',
+  title: '鰹の「チチコ」が、商品に？🐟',
+  lead: 'この街の鰹の心臓「チチコ」から採れる成分「エラスチン」を使った商品を企画しています。「飲むサプリメント」と「塗る美容液」の両方を検討中です。「買わない」というお答えがいちばん参考になりますので、率直にお聞かせください。販売や勧誘は一切ありません。匿名で回答できます。',
 };
 
 const beautySurveyQuestions = [
@@ -299,7 +299,7 @@ const beautySurveyQuestions = [
     icon: '🐟',
     prompt: 'この商品が発売されたら、購入したいと思いますか？',
     note:
-      '【企画中の商品】高知・久礼のカツオ由来エラスチンを配合した商品。「飲むサプリメント（１日１粒・約１か月分）」と「塗る美容液（約１か月分）」の両方を検討中で、税込3,980円を想定しています。※仕様・価格は未定です。',
+      '【企画中の商品】久礼のカツオの心臓「チチコ」から採れるエラスチンを配合した商品。「飲むサプリメント（１日１粒・約１か月分）」と「塗る美容液（約１か月分）」の両方を検討中で、税込3,980円を想定しています。※仕様・価格は未定です。',
     options: [
       'この価格で購入したい',
       'お試しサイズがあれば購入したい',
@@ -2195,8 +2195,8 @@ function homePage() {
       <button class="survey-game-banner beauty-banner" data-route="beauty" type="button">
         <span class="survey-game-banner__icon">🌿</span>
         <div class="survey-game-banner__body">
-          <strong>この商品、買いますか？</strong>
-          <span>約2分・久礼のカツオ由来エラスチン（サプリ・美容液）の企画アンケート</span>
+          <strong>鰹の「チチコ」が、商品に？</strong>
+          <span>約2分・久礼のチチコ由来エラスチン（サプリ・美容液）の企画アンケート</span>
         </div>
         <span class="survey-game-banner__arrow">›</span>
       </button>

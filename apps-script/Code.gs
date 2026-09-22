@@ -5,7 +5,8 @@
  *   - 2階会議室の予約（formType:'reservation'）→ Googleカレンダー登録（ダブルブッキング防止）
  *   - 空き状況の取得（GET ?action=reservations&date=YYYY-MM-DD）
  *   - 車いす予約（formType:'rental'）→ スプレッドシートに記録
- *   - 美容液アンケート（formType:'beautySurvey'）→ 専用シートに記録
+ *   - 商品アンケート（formType:'beautySurvey'）→ 性別で「男性調査」「女性調査」に分けて記録
+ *   - 商品アンケートのモニター登録（formType:'beautyMonitorSignup'）→ 専用シートに記録
  *   - アンケート（formTypeなし）→ スプレッドシートに記録
  *
  * ■ 張り替え手順（既存スクリプトを丸ごと置き換える場合）
@@ -44,9 +45,12 @@ var CONFIG = {
   rentalSheet: '車いす予約',
   reservationSheet: '会議室予約',
   wheelchairSheet: '車いす事前予約',
-  // 設問セットを変えるたびに、旧シート（「美容液アンケート」「商品アンケート」）はそのまま残し、
-  // 列がズレないよう新しいシート名で記録する。
-  beautySurveySheet: '商品アンケート2',
+  // 商品アンケートは回答者の性別で書き込み先シートを完全に分ける（列ズレの再発防止）。
+  // 「男性」→ maleSurveySheet、それ以外（女性・回答しないなど）→ femaleSurveySheet。
+  maleSurveySheet: '男性調査',
+  femaleSurveySheet: '女性調査',
+  // 発売前モニター・先行案内の希望メールアドレスを記録する専用シート（完了画面の単独ステップ用）。
+  beautyMonitorSheet: 'モニター登録',
 };
 
 // ===== エントリーポイント ========================================
@@ -76,8 +80,10 @@ function doPost(e) {
       return jsonOutput({ ok: true });
     }
     if (data.formType === 'beautySurvey') {
-      logBeautySurveyRow(data);
-      return jsonOutput({ ok: true });
+      return jsonOutput(logBeautySurveyRow(data));
+    }
+    if (data.formType === 'beautyMonitorSignup') {
+      return jsonOutput(logBeautyMonitorRow(data));
     }
     // それ以外はアンケートとして記録（項目別に列分け）
     logSurveyRow(data);
@@ -418,32 +424,165 @@ function logSurveyRow(data) {
   }
 }
 
-// 美容液アンケートを、専用シートに設問ごと列分けして記録する（1問1回答のみ）。
-// 列: 受付日時 / 各設問（単一回答）
+// 旧シート（「商品アンケート2」「商品アンケート3」など、列ズレ・重複データが
+// 混在する過去バージョン）を、一度だけリネームして残す。上書き・削除はしない。
+// 現在の CONFIG のシート名と衝突しない場合のみ動作する（すでにリネーム済みなら何もしない）。
+function renameOldBeautySheetOnce(ss) {
+  var legacyNames = ['商品アンケート', '商品アンケート2', '商品アンケート3', '美容液アンケート'];
+  var currentNames = [CONFIG.maleSurveySheet, CONFIG.femaleSurveySheet];
+  for (var i = 0; i < legacyNames.length; i++) {
+    try {
+      var legacyName = legacyNames[i];
+      if (currentNames.indexOf(legacyName) !== -1) continue;
+      var legacy = ss.getSheetByName(legacyName);
+      if (!legacy) continue;
+      legacy.setName(legacyName + '（重複あり・旧データ）');
+    } catch (e) {
+      // リネームに失敗しても新規記録は継続する。
+    }
+  }
+}
+
+// answers配列（{label, value}の並び）から、指定ラベルの回答値を取得する。
+function findAnswerValue(answers, label) {
+  for (var i = 0; i < answers.length; i++) {
+    if (answers[i] && answers[i].label === label) {
+      return answers[i].value || '';
+    }
+  }
+  return '';
+}
+
+// ヘッダー行（配列）同士が完全一致するか検証する。
+function headersMatch(a, b) {
+  if (a.length !== b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (String(a[i]) !== String(b[i])) return false;
+  }
+  return true;
+}
+
+// submissionId 列（最終列）を探索し、同じ submissionId がすでに記録済みか調べる。
+// 冪等化の主手段：同じ回答が二重送信されても、2回目以降は書き込まない。
+function isDuplicateSubmissionId(sheet, submissionId, submissionIdCol) {
+  if (!submissionId) return false;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return false;
+  var ids = sheet.getRange(2, submissionIdCol, lastRow - 1, 1).getValues();
+  for (var i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(submissionId)) return true;
+  }
+  return false;
+}
+
+// submissionId が無い/一致しない環境向けの保険：直前の行と内容が完全一致し、
+// かつ60秒以内の書き込みであれば、二重送信とみなして弾く。
+function isDuplicateRecentContent(sheet, newRow, contentColCount) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return false;
+  var lastValues = sheet.getRange(lastRow, 1, 1, contentColCount).getValues()[0];
+  var lastTime = lastValues[0] instanceof Date ? lastValues[0] : new Date(lastValues[0]);
+  var elapsedMs = new Date().getTime() - lastTime.getTime();
+  if (elapsedMs > 60 * 1000) return false;
+
+  for (var i = 1; i < contentColCount; i++) {
+    if (String(lastValues[i] || '') !== String(newRow[i] || '')) return false;
+  }
+  return true;
+}
+
+// 商品アンケートを、回答者の性別に応じたシートへ設問ごと列分けして記録する
+// （1問1回答のみ）。「男性」→ maleSurveySheet、それ以外 → femaleSurveySheet。
+// 列: 受付日時 / 各設問（単一回答） / submissionId
+// ヘッダーが一致しない場合は書き込まずエラーを返す（列ズレを構造的に防止）。
 function logBeautySurveyRow(data) {
   try {
     var ss = getSpreadsheet();
-    if (!ss) return;
+    if (!ss) return { ok: false, reason: 'no_spreadsheet' };
+
+    renameOldBeautySheetOnce(ss);
+
     var answers = data.answers || [];
-    var sheet = ss.getSheetByName(CONFIG.beautySurveySheet);
+    var gender = findAnswerValue(answers, '性別');
+    var targetSheetName = gender === '男性' ? CONFIG.maleSurveySheet : CONFIG.femaleSurveySheet;
+
     var header = ['受付日時'];
     for (var h = 0; h < answers.length; h++) {
       header.push(answers[h].label || ('設問' + (h + 1)));
     }
+    header.push('submissionId');
+    var submissionIdCol = header.length;
+
+    var sheet = ss.getSheetByName(targetSheetName);
     if (!sheet) {
-      sheet = ss.insertSheet(CONFIG.beautySurveySheet);
+      sheet = ss.insertSheet(targetSheetName);
       sheet.appendRow(header);
-    } else if (sheet.getLastRow() === 0 || sheet.getLastColumn() < header.length) {
-      // 設問を増やしたときに、見出し行も自動で広げる。
-      sheet.getRange(1, 1, 1, header.length).setValues([header]);
+    } else if (sheet.getLastRow() === 0) {
+      sheet.appendRow(header);
+    } else {
+      var existingHeader = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      if (!headersMatch(existingHeader, header)) {
+        return {
+          ok: false,
+          reason: 'header_mismatch',
+          message: 'シート「' + targetSheetName + '」の見出しと送信内容が一致しません。記録していません。',
+        };
+      }
     }
+
+    if (isDuplicateSubmissionId(sheet, data.submissionId, submissionIdCol)) {
+      return { ok: true, duplicate: true };
+    }
+
     var row = [new Date()];
     for (var i = 0; i < answers.length; i++) {
       row.push((answers[i] && answers[i].value) || '');
     }
+    row.push(data.submissionId || '');
+
+    if (isDuplicateRecentContent(sheet, row, submissionIdCol - 1)) {
+      return { ok: true, duplicate: true };
+    }
+
     sheet.appendRow(row);
+    return { ok: true, sheet: targetSheetName };
   } catch (e) {
-    // 記録失敗は送信本体を妨げない。
+    return { ok: false, reason: 'error', message: String(e) };
+  }
+}
+
+// 発売前モニター・先行案内の希望者を記録する（完了画面の単独ステップから送信）。
+// 列: 受付日時 / お名前 / メールアドレス / 元回答submissionId / submissionId
+function logBeautyMonitorRow(data) {
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) return { ok: false, reason: 'no_spreadsheet' };
+
+    var header = ['受付日時', 'お名前', 'メールアドレス', '元回答submissionId', 'submissionId'];
+    var submissionIdCol = header.length;
+
+    var sheet = ss.getSheetByName(CONFIG.beautyMonitorSheet);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.beautyMonitorSheet);
+      sheet.appendRow(header);
+    } else if (sheet.getLastRow() === 0) {
+      sheet.appendRow(header);
+    }
+
+    if (isDuplicateSubmissionId(sheet, data.submissionId, submissionIdCol)) {
+      return { ok: true, duplicate: true };
+    }
+
+    sheet.appendRow([
+      new Date(),
+      data.name || '',
+      data.email || '',
+      data.relatedSubmissionId || '',
+      data.submissionId || '',
+    ]);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: 'error', message: String(e) };
   }
 }
 

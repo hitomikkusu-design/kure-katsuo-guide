@@ -190,6 +190,13 @@ button {
   border: 1px solid rgb(15 95 103 / 14%);
 }
 
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+  transform: none;
+}
+
 .button--app,
 .button--substack {
   display: inline-grid;
@@ -1240,6 +1247,18 @@ button {
 
 .survey-submit {
   min-height: 54px;
+}
+
+.beauty-monitor-skip {
+  display: block;
+  margin: 10px auto 0;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  color: var(--ink-soft, #6b6458);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .survey-share-card {

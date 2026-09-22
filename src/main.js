@@ -101,6 +101,16 @@ function postJsonToAppsScript(url, payload) {
 // 美容液アンケートも同じApps Scriptへ（formType:'beautySurvey' で振り分け、専用シートに記録）。
 const BEAUTY_SURVEY_ENDPOINT = SURVEY_ENDPOINT;
 
+// フォーム表示ごとに1つ発行し、送信ペイロードに含める（サーバー側で二重送信を弾くための鍵）。
+function generateUUID() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // 車いす予約は同じApps Scriptに送信し、formType で振り分けます。
 const RENTAL_ENDPOINT = SURVEY_ENDPOINT;
 const RENTAL_STORAGE_KEY = 'kure-katsuo-guide-rental-active';
@@ -224,7 +234,7 @@ const surveyQuestions = [
 ];
 
 const beautySurveyIntro = {
-  eyebrow: 'ABOUT 2 MIN',
+  eyebrow: 'ABOUT 3 MIN',
   title: '鰹の「チチコ」が、商品に？🐟',
   lead: 'この街の鰹の心臓「チチコ」から採れる成分「エラスチン」を使った商品を企画しています。「飲むサプリメント」と「塗る美容液」の両方を検討中です。「買わない」というお答えがいちばん参考になりますので、率直にお聞かせください。販売や勧誘は一切ありません。匿名で回答できます。',
 };
@@ -263,6 +273,32 @@ const beautySurveyQuestions = [
     options: ['とても興味がある', '少し興味がある', 'あまり興味はない', '全く興味がない'],
   },
   {
+    id: 'giftPurpose',
+    shortLabel: '贈答用か自分用か',
+    icon: '🎁',
+    prompt: '自分用ですか、それとも贈り物ですか？',
+    note: '〈１つ選択〉',
+    options: ['自分用', '家族や友人への贈り物', '両方'],
+  },
+  {
+    id: 'currentBrand',
+    shortLabel: '現在使用中のブランド・価格帯',
+    icon: '🏷️',
+    prompt: '今お使いの美容液・サプリのブランド名と価格帯があれば教えてください。',
+    type: 'text',
+    optional: true,
+    note: '〈自由記入・任意〉わかる範囲でOKです。',
+    placeholder: '例：〇〇（ブランド名）・月3,000円くらい',
+  },
+  {
+    id: 'chichikoAwareness',
+    shortLabel: 'チチコ由来と知った時の興味変化',
+    icon: '🔎',
+    prompt: '高知・久礼のカツオ由来の素材だと知ると、興味は変わりますか？',
+    note: '〈１つ選択〉',
+    options: ['とても上がる', '少し上がる', '変わらない', '下がる'],
+  },
+  {
     id: 'purpose',
     shortLabel: '欲しい効果・用途',
     icon: '🎯',
@@ -295,11 +331,11 @@ const beautySurveyQuestions = [
   },
   {
     id: 'purchaseIntent',
-    shortLabel: '購入意向（3,980円）',
+    shortLabel: '購入意向（5,980円）',
     icon: '🐟',
     prompt: 'この商品が発売されたら、購入したいと思いますか？',
     note:
-      '【企画中の商品】久礼のカツオの心臓「チチコ」から採れるエラスチンを配合した商品。「飲むサプリメント（１日１粒・約１か月分）」と「塗る美容液（約１か月分）」の両方を検討中で、税込3,980円を想定しています。※仕様・価格は未定です。',
+      '【企画中の商品】久礼のカツオの心臓「チチコ」から採れるエラスチンを配合した商品。「飲むサプリメント（１日１粒・約１か月分）」と「塗る美容液（約１か月分）」の両方を検討中で、税込5,980円を想定しています。※仕様・価格は未定です。',
     options: [
       'この価格で購入したい',
       'お試しサイズがあれば購入したい',
@@ -308,6 +344,14 @@ const beautySurveyQuestions = [
       'この価格では購入しない',
       '価格に関係なく購入しない',
     ],
+  },
+  {
+    id: 'trialSizeBudget',
+    shortLabel: 'お試しサイズ許容価格',
+    icon: '🧪',
+    prompt: 'お試しサイズ（2週間分）なら、いくらまで出せますか？',
+    note: '〈１つ選択〉',
+    options: ['980円', '1,480円', '1,980円', '2,980円', '買わない'],
   },
   {
     id: 'alternative',
@@ -378,6 +422,7 @@ const beautySurveyQuestions = [
       'Amazon・楽天など通販サイト',
       '公式サイトの定期便',
       'ドラッグストア・薬局',
+      '久礼大正町市場の店頭',
       '道の駅・市場などの店頭',
       '百貨店やギフト売り場',
       'テレビ通販',
@@ -922,6 +967,23 @@ function saveBeautySurveyResponse(response) {
 }
 
 function beautySurveyQuestionCard(question, index) {
+  if (question.type === 'text') {
+    return `
+      <fieldset class="survey-question" data-beauty-survey-question="${question.id}">
+        <legend>
+          <span class="survey-question__number">${index + 1}</span>
+          <span class="survey-question__icon" aria-hidden="true">${question.icon}</span>
+          <span>${question.prompt}</span>
+        </legend>
+        ${question.note ? `<p class="survey-marketing-note">${question.note}</p>` : ''}
+        <label class="survey-free-text">
+          <span>回答</span>
+          <input type="text" name="${question.id}" maxlength="120" placeholder="${question.placeholder || ''}" ${question.optional ? '' : 'required'} />
+        </label>
+      </fieldset>
+    `;
+  }
+
   const inputType = question.type === 'multi' ? 'checkbox' : 'radio';
   const required = question.type === 'multi' || question.optional ? '' : 'required';
 
@@ -957,7 +1019,14 @@ function beautySurveyQuestionCard(question, index) {
   `;
 }
 
+// 年代（ageGroup）までは全員に聞き、それ以降は未成年の場合に非表示にする。
+const BEAUTY_SURVEY_AGE_SPLIT = 3;
+
 function beautySurveyPage() {
+  const submissionId = generateUUID();
+  const preAgeQuestions = beautySurveyQuestions.slice(0, BEAUTY_SURVEY_AGE_SPLIT);
+  const postAgeQuestions = beautySurveyQuestions.slice(BEAUTY_SURVEY_AGE_SPLIT);
+
   return `
     <div class="stack">
       <section class="survey-hero">
@@ -967,17 +1036,22 @@ function beautySurveyPage() {
       </section>
 
       <form class="survey-form" id="beauty-survey-form">
-        ${beautySurveyQuestions.map(beautySurveyQuestionCard).join('')}
+        <input type="hidden" name="submissionId" value="${submissionId}" />
 
-        <label class="survey-free-text survey-free-text--textarea">
-          <span>「こんな商品なら買う」というご意見があれば、ぜひ教えてください（任意）</span>
-          <textarea name="freeComment" rows="3" placeholder="価格・使い方・見た目など、思いついたことをそのまま書いてください"></textarea>
-        </label>
+        ${preAgeQuestions.map(beautySurveyQuestionCard).join('')}
 
-        <label class="survey-free-text survey-free-text--textarea">
-          <span>試作品のモニターに興味がある方は、メールアドレスをどうぞ（任意）</span>
-          <input type="email" name="monitorEmail" placeholder="example@example.com" />
-        </label>
+        <p class="survey-marketing-note" id="beauty-survey-minor-notice" hidden>
+          18歳未満の方への設問はここまでです。ご協力ありがとうございました！このまま送信ボタンを押してください。
+        </p>
+
+        <div id="beauty-survey-post-age">
+          ${postAgeQuestions.map((q) => beautySurveyQuestionCard(q, beautySurveyQuestions.indexOf(q))).join('')}
+
+          <label class="survey-free-text survey-free-text--textarea">
+            <span>「こんな商品なら買う」というご意見があれば、ぜひ教えてください（任意）</span>
+            <textarea name="freeComment" rows="3" placeholder="価格・使い方・見た目など、思いついたことをそのまま書いてください"></textarea>
+          </label>
+        </div>
 
         <button class="button button--primary survey-submit" type="submit">回答を送る</button>
       </form>
@@ -986,6 +1060,28 @@ function beautySurveyPage() {
         <p class="survey-share-card__eyebrow">THANK YOU</p>
         <h3>ご協力ありがとうございます。</h3>
         <p>いただいた声を、商品づくりに活かしていきます。</p>
+      </section>
+
+      <section class="survey-hero" id="beauty-monitor-step" aria-live="polite" hidden>
+        <p class="hero__eyebrow">最後に1つだけ</p>
+        <h2>発売前のモニター・先行案内を受け取りますか？</h2>
+        <p>試作品のモニターや先行販売のご案内を、メールでお届けします。</p>
+        <form id="beauty-monitor-form">
+          <label class="survey-free-text">
+            <span>メールアドレス</span>
+            <input type="email" name="monitorEmail" placeholder="example@example.com" required />
+          </label>
+          <div class="hero__actions">
+            <button class="button button--primary" type="submit">受け取る</button>
+            <button class="button button--ghost" type="button" id="beauty-monitor-skip">今回はやめておく</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="survey-share-card" id="beauty-survey-final" aria-live="polite" hidden>
+        <p class="survey-share-card__eyebrow">ALL DONE</p>
+        <h3>ありがとうございました！</h3>
+        <p>回答は久礼の商品づくりのヒントとして活用させていただきます。</p>
       </section>
     </div>
   `;
@@ -1008,20 +1104,112 @@ function collectBeautySurveyAnswer(form, question) {
   return { label: question.shortLabel, value };
 }
 
+function updateBeautySurveyMinorBranch(form) {
+  const postAge = document.querySelector('#beauty-survey-post-age');
+  const notice = document.querySelector('#beauty-survey-minor-notice');
+  if (!postAge || !notice) return;
+
+  const isMinor = form.elements.ageGroup?.value === '10代以下';
+
+  postAge.hidden = isMinor;
+  notice.hidden = !isMinor;
+
+  postAge.querySelectorAll('input, textarea, select').forEach((el) => {
+    if (isMinor) {
+      if (el.required) el.dataset.wasRequired = 'true';
+      el.required = false;
+    } else if (el.dataset.wasRequired) {
+      el.required = true;
+      delete el.dataset.wasRequired;
+    }
+  });
+}
+
+function showBeautySurveyThanks() {
+  document.querySelector('#beauty-survey-form')?.setAttribute('hidden', '');
+  document.querySelector('#beauty-survey-thanks')?.removeAttribute('hidden');
+  document.querySelector('#beauty-monitor-step')?.removeAttribute('hidden');
+  document.querySelector('#beauty-survey-thanks')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showBeautySurveyFinal() {
+  document.querySelector('#beauty-monitor-step')?.setAttribute('hidden', '');
+  document.querySelector('#beauty-survey-final')?.removeAttribute('hidden');
+  document.querySelector('#beauty-survey-final')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function setupBeautyMonitorForm(mainSubmissionId) {
+  const form = document.querySelector('#beauty-monitor-form');
+  const skipButton = document.querySelector('#beauty-monitor-skip');
+  if (!form) return;
+
+  let isSubmitting = false;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = '送信中…';
+    }
+
+    const payload = {
+      formType: 'beautyMonitorSignup',
+      submissionId: generateUUID(),
+      relatedSubmissionId: mainSubmissionId,
+      createdAt: new Date().toISOString(),
+      email: form.elements.monitorEmail?.value.trim() || '',
+    };
+
+    if (BEAUTY_SURVEY_ENDPOINT) {
+      try {
+        await postJsonToAppsScript(BEAUTY_SURVEY_ENDPOINT, payload);
+      } catch {
+        // 通信できなくても、送信は完了扱いとする。
+      }
+    }
+
+    showBeautySurveyFinal();
+  });
+
+  skipButton?.addEventListener('click', () => {
+    showBeautySurveyFinal();
+  });
+}
+
 function setupBeautySurveyInteractions() {
   const form = document.querySelector('#beauty-survey-form');
   if (!form) return;
 
+  const submissionId = form.elements.submissionId?.value || generateUUID();
+  let isSubmitting = false;
+
+  document.querySelectorAll('input[name="ageGroup"]').forEach((input) => {
+    input.addEventListener('change', () => updateBeautySurveyMinorBranch(form));
+  });
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const submitButton = form.querySelector('.survey-submit');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = '送信中…';
+    }
+
     const response = {
       formType: 'beautySurvey',
+      submissionId,
       id: `beauty-${Date.now()}`,
       createdAt: new Date().toISOString(),
       answers: [
         ...beautySurveyQuestions.map((question) => collectBeautySurveyAnswer(form, question)),
         { label: '自由記入', value: form.elements.freeComment?.value.trim() || '' },
-        { label: 'モニター希望メール', value: form.elements.monitorEmail?.value.trim() || '' },
       ],
     };
 
@@ -1035,9 +1223,8 @@ function setupBeautySurveyInteractions() {
       }
     }
 
-    document.querySelector('#beauty-survey-thanks')?.removeAttribute('hidden');
-    document.querySelector('#beauty-survey-thanks')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.alert('ご協力ありがとうございます。回答を送信しました。');
+    showBeautySurveyThanks();
+    setupBeautyMonitorForm(submissionId);
   });
 }
 

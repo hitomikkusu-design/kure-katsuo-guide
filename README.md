@@ -214,7 +214,11 @@ PR #3 では、既存のガイド構成や音声ガイド方針を残したま�
 
 ## 記録先スプレッドシート
 
-アンケート・車いす予約・会議室予約・美容液アンケートは、すべて同じApps Script経由でスプレッドシート「[久礼大正町予約アプリ](https://docs.google.com/spreadsheets/d/1ORyg4tZsONqXBVCtDI2h2aEdjHZzzP2fu36ar_Tz1Ug/edit)」に記録されます（`src/main.js` の `SURVEY_ENDPOINT`、`apps-script/Code.gs` の `CONFIG.spreadsheetId` がこちらを指しています）。過去の旅アンケート・車いす予約の実績データもこちらに残っています。
+アンケート・車いす予約・会議室予約・商品アンケートは、すべて同じApps Script経由でスプレッドシート「[久礼大正町予約アプリ](https://docs.google.com/spreadsheets/d/1ORyg4tZsONqXBVCtDI2h2aEdjHZzzP2fu36ar_Tz1Ug/edit)」に記録されます（`src/main.js` の `SURVEY_ENDPOINT`、`apps-script/Code.gs` の `CONFIG.spreadsheetId` がこちらを指しています）。過去の旅アンケート・車いす予約の実績データもこちらに残っています。
+
+## 追加機能: 旅の声アンケート（二重送信対策）
+
+旅の声アンケート（ルート: `survey`）も、商品アンケートと同じ二重送信対策を実装しています。送信ボタンは押した瞬間に無効化され、フォーム表示ごとに発行する `submissionId` をペイロードに含めます。記録先は `apps-script/Code.gs` の `CONFIG.surveySheet`（既定「アンケート2」）で、書き込み前にヘッダーと送信内容のキー一致を検証し、不一致なら書き込まずエラーを返します。旧シート「アンケート」（作成当初からヘッダー行がなく、1行目から生JSONが入っている古い形式）は自動でリネームして保持し、上書き・削除はしません。
 
 ## 絵文字の文字化け対策
 

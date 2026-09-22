@@ -41,7 +41,9 @@ var CONFIG = {
   spreadsheetId: '1ORyg4tZsONqXBVCtDI2h2aEdjHZzzP2fu36ar_Tz1Ug',
 
   // 記録先シート名（無ければ自動作成）。
-  surveySheet: 'アンケート',
+  // 旧「アンケート」シートは、はるか昔にヘッダー行なしで作られており（1行目からJSON生データ）、
+  // ヘッダー検証の対象にできないため、検証つきの新シート名で記録する。
+  surveySheet: 'アンケート2',
   rentalSheet: '車いす予約',
   reservationSheet: '会議室予約',
   wheelchairSheet: '車いす事前予約',
@@ -86,8 +88,7 @@ function doPost(e) {
       return jsonOutput(logBeautyMonitorRow(data));
     }
     // それ以外はアンケートとして記録（項目別に列分け）
-    logSurveyRow(data);
-    return jsonOutput({ ok: true });
+    return jsonOutput(logSurveyRow(data));
   } catch (err) {
     return jsonOutput({ ok: false, reason: 'bad_request', message: String(err) });
   }
@@ -392,23 +393,47 @@ function logWheelchairRow(data, eventId) {
 }
 
 // アンケートを、設問ごとに列分けして記録する（集計しやすいように）。
-// 列: 受付日時 / 各設問（選択＋自由記入をまとめる） / 自由コメント / 活用可否
+// 列: 受付日時 / 各設問（選択＋自由記入をまとめる） / 自由コメント / 活用可否 / submissionId
+// 二重送信対策は商品アンケートと同じ仕組み（submissionId冪等化＋60秒以内の内容一致フォールバック）。
+// ヘッダーが一致しない場合は書き込まずエラーを返す（列ズレを構造的に防止）。
 function logSurveyRow(data) {
   try {
     var ss = getSpreadsheet();
-    if (!ss) return;
+    if (!ss) return { ok: false, reason: 'no_spreadsheet' };
+
+    archiveLegacySheetsOnce(ss, ['アンケート'], [CONFIG.surveySheet]);
+
     var answers = data.answers || [];
+    var header = ['受付日時'];
+    for (var h = 0; h < answers.length; h++) {
+      header.push(answers[h].label || ('設問' + (h + 1)));
+    }
+    header.push('自由コメント');
+    header.push('活用可否');
+    header.push('submissionId');
+    var submissionIdCol = header.length;
+
     var sheet = ss.getSheetByName(CONFIG.surveySheet);
     if (!sheet) {
       sheet = ss.insertSheet(CONFIG.surveySheet);
-      var header = ['受付日時'];
-      for (var h = 0; h < answers.length; h++) {
-        header.push(answers[h].label || ('設問' + (h + 1)));
-      }
-      header.push('自由コメント');
-      header.push('活用可否');
       sheet.appendRow(header);
+    } else if (sheet.getLastRow() === 0) {
+      sheet.appendRow(header);
+    } else {
+      var existingHeader = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      if (!headersMatch(existingHeader, header)) {
+        return {
+          ok: false,
+          reason: 'header_mismatch',
+          message: 'シート「' + CONFIG.surveySheet + '」の見出しと送信内容が一致しません。記録していません。',
+        };
+      }
     }
+
+    if (isDuplicateSubmissionId(sheet, data.submissionId, submissionIdCol)) {
+      return { ok: true, duplicate: true };
+    }
+
     var row = [new Date()];
     for (var i = 0; i < answers.length; i++) {
       var a = answers[i] || {};
@@ -418,18 +443,23 @@ function logSurveyRow(data) {
     }
     row.push(data.comment || '');
     row.push(data.shareable ? '可' : '');
+    row.push(data.submissionId || '');
+
+    if (isDuplicateRecentContent(sheet, row, submissionIdCol - 1)) {
+      return { ok: true, duplicate: true };
+    }
+
     sheet.appendRow(row);
+    return { ok: true };
   } catch (e) {
-    // 記録失敗は送信本体を妨げない。
+    return { ok: false, reason: 'error', message: String(e) };
   }
 }
 
-// 旧シート（「商品アンケート2」「商品アンケート3」など、列ズレ・重複データが
-// 混在する過去バージョン）を、一度だけリネームして残す。上書き・削除はしない。
-// 現在の CONFIG のシート名と衝突しない場合のみ動作する（すでにリネーム済みなら何もしない）。
-function renameOldBeautySheetOnce(ss) {
-  var legacyNames = ['商品アンケート', '商品アンケート2', '商品アンケート3', '美容液アンケート'];
-  var currentNames = [CONFIG.maleSurveySheet, CONFIG.femaleSurveySheet];
+// 旧シート（列ズレ・重複データ・ヘッダー無しなど過去バージョンの問題を抱えたシート）を、
+// 一度だけリネームして残す。上書き・削除はしない。現在の CONFIG のシート名と衝突しない
+// 場合のみ動作する（すでにリネーム済みなら何もしない）。
+function archiveLegacySheetsOnce(ss, legacyNames, currentNames) {
   for (var i = 0; i < legacyNames.length; i++) {
     try {
       var legacyName = legacyNames[i];
@@ -500,7 +530,11 @@ function logBeautySurveyRow(data) {
     var ss = getSpreadsheet();
     if (!ss) return { ok: false, reason: 'no_spreadsheet' };
 
-    renameOldBeautySheetOnce(ss);
+    archiveLegacySheetsOnce(
+      ss,
+      ['商品アンケート', '商品アンケート2', '商品アンケート3', '美容液アンケート'],
+      [CONFIG.maleSurveySheet, CONFIG.femaleSurveySheet],
+    );
 
     var answers = data.answers || [];
     var gender = findAnswerValue(answers, '性別');

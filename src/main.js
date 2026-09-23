@@ -995,7 +995,7 @@ function beautySurveyPage() {
         ${beautySurveyIntro.paragraphs.map((p) => `<p>${p}</p>`).join('')}
       </section>
 
-      <form class="survey-form" id="beauty-survey-form">
+      <form class="survey-form" id="beauty-survey-form" novalidate>
         <input type="hidden" name="submissionId" value="${submissionId}" />
 
         ${beautySurveyQuestions.map(beautySurveyQuestionCard).join('')}
@@ -1119,6 +1119,26 @@ function setupBeautySurveyInteractions() {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (isSubmitting) return;
+
+    // ブラウザ標準のrequired検証だけだと、未回答の設問があった時にボタンの
+    // 見た目が一切変わらず「押しても反応しない」ように見えてしまう
+    // （実際は何も送信されていない）。ここで明示的にチェックし、
+    // 未回答の設問までスクロールしてわかりやすく知らせる。
+    if (!form.checkValidity()) {
+      const firstInvalid = form.querySelector(':invalid');
+      const invalidFieldset = firstInvalid?.closest('.survey-question');
+      form.querySelectorAll('.survey-question--invalid').forEach((el) => el.classList.remove('survey-question--invalid'));
+      if (invalidFieldset) {
+        invalidFieldset.classList.add('survey-question--invalid');
+        invalidFieldset.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        invalidFieldset.querySelectorAll('input, textarea').forEach((el) => {
+          el.addEventListener('change', () => invalidFieldset.classList.remove('survey-question--invalid'), { once: true });
+        });
+      }
+      window.alert('回答していない設問があります。赤く囲まれた設問までスクロールしました。');
+      return;
+    }
+
     isSubmitting = true;
 
     const submitButton = form.querySelector('.survey-submit');

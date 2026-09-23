@@ -21,6 +21,13 @@
   box-sizing: border-box;
 }
 
+/* hidden属性は常に非表示を保証する（display:gridなどを直接指定するクラスに
+   よって上書きされ、送信前から完了カードが画面下部に表示され続けていた
+   バグの対策）。 */
+[hidden] {
+  display: none !important;
+}
+
 html {
   min-width: 320px;
   background: #e7f1ef;
@@ -1109,6 +1116,13 @@ button {
   gap: 12px;
   margin: 0;
   padding: 18px;
+  border-radius: 14px;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.survey-question--invalid {
+  box-shadow: 0 0 0 2px var(--danger, #e0503a);
+  background-color: rgb(224 80 58 / 6%);
 }
 
 .survey-question legend {

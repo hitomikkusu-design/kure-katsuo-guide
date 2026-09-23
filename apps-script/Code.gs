@@ -620,6 +620,68 @@ function logBeautyMonitorRow(data) {
   }
 }
 
+// ===== 手動メンテナンス用（自動実行はされない） ===================
+// 過去の二重送信バグで生じた重複行を、一度だけ手作業で削除するための関数。
+// Apps Scriptエディタで「実行するファンクション」に removeDuplicateRowsOnce を選び、
+// ▶ 実行ボタンを押すと動く（doPost/doGetからは呼ばれず、自動実行は一切されない）。
+// 各シートについて、1列目（受付日時）を除く全列の内容が完全一致する行を「重複」とみなし、
+// 一番早い1件だけ残して2件目以降を削除する。内容が少しでも違う行（=別の回答）は削除しない。
+function removeDuplicateRowsOnce() {
+  var ss = getSpreadsheet();
+  if (!ss) return 'スプレッドシートを開けませんでした。';
+
+  // 過去に存在しえたシート名をすべて含める（無いものは自動的にスキップされる）。
+  var targetSheets = [
+    CONFIG.surveySheet,
+    'アンケート',
+    CONFIG.maleSurveySheet,
+    CONFIG.femaleSurveySheet,
+    CONFIG.beautyMonitorSheet,
+    '商品アンケート',
+    '商品アンケート2',
+    '商品アンケート3',
+    '美容液アンケート',
+  ];
+
+  var report = [];
+  for (var s = 0; s < targetSheets.length; s++) {
+    var sheetName = targetSheets[s];
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) continue;
+
+    var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+    if (lastRow < 3 || lastCol < 1) continue; // ヘッダー+1行以下なら重複のしようがない
+
+    var values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    var seen = {};
+    var rowsToDelete = [];
+
+    // 1行目はヘッダーとして残し、2行目以降だけを重複判定する。
+    for (var r = 1; r < values.length; r++) {
+      var key = JSON.stringify(values[r].slice(1));
+      if (seen[key]) {
+        rowsToDelete.push(r + 1); // シート上の実際の行番号（1始まり）
+      } else {
+        seen[key] = true;
+      }
+    }
+
+    // 行番号がズレないよう、後ろの行から順に削除する。
+    for (var i = rowsToDelete.length - 1; i >= 0; i--) {
+      sheet.deleteRow(rowsToDelete[i]);
+    }
+
+    if (rowsToDelete.length > 0) {
+      report.push(sheetName + ': ' + rowsToDelete.length + '件の重複行を削除しました');
+    }
+  }
+
+  var summary = report.length ? report.join('\n') : '重複行は見つかりませんでした。';
+  Logger.log(summary);
+  return summary;
+}
+
 // その他のフォーム記録用（JSONをそのまま保存・予備）。
 function logRow(sheetName, data, extra) {
   try {

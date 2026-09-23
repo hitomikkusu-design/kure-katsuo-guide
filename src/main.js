@@ -879,7 +879,7 @@ function setupSurveyInteractions() {
 
   form.addEventListener('input', renderSurveyProgress);
   form.addEventListener('change', renderSurveyProgress);
-  form.addEventListener('submit', async (event) => {
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (isSubmitting) return;
     isSubmitting = true;
@@ -887,7 +887,7 @@ function setupSurveyInteractions() {
     const submitButton = form.querySelector('.survey-submit');
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = '送信中…';
+      submitButton.textContent = '送信済み';
     }
 
     const response = {
@@ -902,17 +902,13 @@ function setupSurveyInteractions() {
     saveSurveyResponse(response);
     renderSurveyShareCard(response);
 
+    // 通信の完了を待たずに完了扱いにする（端末内保存は同期済み。Apps Scriptの
+    // 応答待ちでボタンが固まって見え、連打の原因になっていたため）。
+    // 通信できなくても、回答は端末内に保存済みなので送信完了として扱う。
     if (SURVEY_ENDPOINT) {
-      try {
-        await postJsonToAppsScript(SURVEY_ENDPOINT, response);
-      } catch {
-        // 通信できなくても、回答は端末内に保存済みなので送信完了として扱う。
-      }
+      postJsonToAppsScript(SURVEY_ENDPOINT, response).catch(() => {});
     }
 
-    if (submitButton) {
-      submitButton.textContent = '送信済み';
-    }
     window.alert('旅メモカードを作成しました。回答はこの端末に保存されています。');
   });
   renderSurveyProgress();
@@ -1079,7 +1075,7 @@ function setupBeautyMonitorForm(mainSubmissionId) {
 
   let isSubmitting = false;
 
-  form.addEventListener('submit', async (event) => {
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (isSubmitting) return;
     isSubmitting = true;
@@ -1087,7 +1083,7 @@ function setupBeautyMonitorForm(mainSubmissionId) {
     const submitButton = form.querySelector('button[type="submit"]');
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = '送信中…';
+      submitButton.textContent = '送信済み';
     }
 
     const payload = {
@@ -1099,12 +1095,10 @@ function setupBeautyMonitorForm(mainSubmissionId) {
       email: form.elements.monitorEmail?.value.trim() || '',
     };
 
+    // 通信の完了を待たずに完了画面へ進む（応答待ちでボタンが固まって見え、
+    // 連打の原因になっていたため）。通信できなくても送信は完了扱いとする。
     if (BEAUTY_SURVEY_ENDPOINT) {
-      try {
-        await postJsonToAppsScript(BEAUTY_SURVEY_ENDPOINT, payload);
-      } catch {
-        // 通信できなくても、送信は完了扱いとする。
-      }
+      postJsonToAppsScript(BEAUTY_SURVEY_ENDPOINT, payload).catch(() => {});
     }
 
     showBeautySurveyFinal();
@@ -1122,7 +1116,7 @@ function setupBeautySurveyInteractions() {
   const submissionId = form.elements.submissionId?.value || generateUUID();
   let isSubmitting = false;
 
-  form.addEventListener('submit', async (event) => {
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (isSubmitting) return;
     isSubmitting = true;
@@ -1130,7 +1124,7 @@ function setupBeautySurveyInteractions() {
     const submitButton = form.querySelector('.survey-submit');
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = '送信中…';
+      submitButton.textContent = '送信済み';
     }
 
     const response = {
@@ -1143,12 +1137,11 @@ function setupBeautySurveyInteractions() {
 
     saveBeautySurveyResponse(response);
 
+    // 通信の完了を待たずに完了画面へ進む（端末内保存は同期済み。Apps Scriptの
+    // 応答待ちでボタンが固まって見え、連打の原因になっていたため）。
+    // 通信できなくても、回答は端末内に保存済みなので送信完了として扱う。
     if (BEAUTY_SURVEY_ENDPOINT) {
-      try {
-        await postJsonToAppsScript(BEAUTY_SURVEY_ENDPOINT, response);
-      } catch {
-        // 通信できなくても、回答は端末内に保存済みなので送信完了として扱う。
-      }
+      postJsonToAppsScript(BEAUTY_SURVEY_ENDPOINT, response).catch(() => {});
     }
 
     showBeautySurveyThanks();

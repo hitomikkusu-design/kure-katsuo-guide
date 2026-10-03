@@ -49,8 +49,10 @@ var CONFIG = {
   wheelchairSheet: '車いす事前予約',
   // 商品アンケートは回答者の性別で書き込み先シートを完全に分ける（列ズレの再発防止）。
   // 「男性」→ maleSurveySheet、それ以外（女性・回答しないなど）→ femaleSurveySheet。
-  maleSurveySheet: '男性調査',
-  femaleSurveySheet: '女性調査',
+  // 「お住まいの地域」設問を追加し見出しが変わったため、新シート名に切り替える
+  // （旧「男性調査」「女性調査」は自動リネームして保持）。
+  maleSurveySheet: '男性調査2',
+  femaleSurveySheet: '女性調査2',
   // 発売前モニター・先行案内の希望メールアドレスを記録する専用シート（完了画面の単独ステップ用）。
   beautyMonitorSheet: 'モニター登録',
 };
@@ -532,7 +534,7 @@ function logBeautySurveyRow(data) {
 
     archiveLegacySheetsOnce(
       ss,
-      ['商品アンケート', '商品アンケート2', '商品アンケート3', '美容液アンケート'],
+      ['商品アンケート', '商品アンケート2', '商品アンケート3', '美容液アンケート', '男性調査', '女性調査'],
       [CONFIG.maleSurveySheet, CONFIG.femaleSurveySheet],
     );
 

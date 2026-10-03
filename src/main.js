@@ -249,6 +249,14 @@ const beautySurveyIntro = {
 
 const beautySurveyQuestions = [
   {
+    id: 'residence',
+    shortLabel: 'お住まいの地域',
+    icon: '📍',
+    prompt: 'だいたい、どこの都道府県にお住まいですか？',
+    note: '〈１つ選択・わかる範囲でOK〉',
+    options: ['高知県', '四国（高知県外）', '関西', '中国地方', '九州', '中部・北陸', '関東', '東北・北海道', '海外', '回答しない'],
+  },
+  {
     id: 'ageGroup',
     shortLabel: '年代',
     icon: '🎂',

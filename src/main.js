@@ -603,7 +603,7 @@ function appQrCard(placement = 'page') {
           <p>このQRはアプリの公開URLを開きます。アプリの中身を更新してもURLが同じなら、印刷済みのQRコードはそのまま使えます。</p>
           <p class="app-qr-card__url">${APP_URL}</p>
         </div>
-        <img class="app-qr-card__qr" src="${APP_QR_SRC}" alt="久礼カツオ待ち時間ガイドを開くQRコード" width="148" height="148" loading="lazy" />
+        <img class="app-qr-card__qr" src="${APP_QR_SRC}" alt="鰹の国、久礼。を開くQRコード" width="148" height="148" loading="lazy" />
       </div>
       <div class="app-qr-card__actions">
         <a class="button button--app" href="${APP_URL}" target="_blank" rel="noopener noreferrer">アプリを開く</a>

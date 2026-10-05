@@ -613,20 +613,6 @@ function appQrCard(placement = 'page') {
   `;
 }
 
-function surveyPreviewCard() {
-  const previewItems = surveyQuestions.map((question) => `<li><span>${question.icon}</span><strong>${question.label}</strong><small>${question.prompt}</small></li>`).join('');
-
-  return `
-    <section class="survey-preview-card" aria-labelledby="survey-preview-title" data-pr3-feature="survey-preview">
-      <p class="survey-preview-card__eyebrow">VOICE QUEST</p>
-      <h3 id="survey-preview-title">アンケート内容はここに入っています</h3>
-      <p>来訪理由だけでなく、SNS・マーケティング施策に使いやすい認知経路、同行者、満足度、欲しい情報までまとめて集めます。設問一覧はホーム画面でも確認できます。</p>
-      <ol class="survey-preview-card__list">${previewItems}</ol>
-      ${button('アンケートに答える', 'survey', 'primary')}
-    </section>
-  `;
-}
-
 function substackLinkCard(placement = 'page') {
   return `
     <section class="substack-link-card substack-link-card--${placement}" aria-labelledby="substack-link-title" data-pr3-feature="substack-link">

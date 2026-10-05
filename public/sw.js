@@ -1,6 +1,7 @@
-const CACHE_NAME = 'kure-katsuo-guide-v13';
+const CACHE_NAME = 'kure-katsuo-guide-v14';
 // v13: アプリ本体をネットワーク優先に変更（古いキャッシュで壊れて見える問題の対策）。
-const APP_SHELL = ['./', 'index.html', 'tower-warrior.html', 'src/main.js', 'src/styles/global.css', 'manifest.webmanifest', 'icons/icon.svg', 'qr-kure-katsuo-guide.svg'];
+// v14: ホーム画面追加用にPNGアイコン（apple-touch-icon等）を追加。
+const APP_SHELL = ['./', 'index.html', 'tower-warrior.html', 'src/main.js', 'src/styles/global.css', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'qr-kure-katsuo-guide.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));

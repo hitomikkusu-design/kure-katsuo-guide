@@ -2516,6 +2516,23 @@ render();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((registration) => {
+      // register()だけだとブラウザ側の判断で更新チェックが後回しにされ、
+      // 新しいデプロイがあっても古いService Workerが居座り続けることがある。
+      // 毎回明示的にupdate()を呼び、確実にチェックさせる。
+      registration.update();
+    });
+  });
+
+  // 新しいService Workerが有効化されたら、表示中のページを自動で読み込み直す。
+  // これが無いと、SW自体は更新されてもタブ内のJSは古いまま動き続け、
+  // ユーザーがアイコン削除やプライベートブラウズを試さない限り、見た目は
+  // いつまでも古いバージョンから変わらない（「普通のSafariだと古いまま」
+  // という不具合の根本原因）。
+  let reloadingForUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadingForUpdate) return;
+    reloadingForUpdate = true;
+    window.location.reload();
   });
 }
